@@ -1,114 +1,149 @@
-## Mercy
+Flow control library focused on readability, convenience & analytics.
 
-**Table of Contents**
+# Introduction
 
-- [Overview](#overview)
-<!-- - [Basic usage](#basic-usage)
-- [Configuration](#configuration)
-  - [Options](#options)
-  - [Example Manifest](#example-manifest) -->
+Tired of...
+- Entering into a new code base with no information? unknown execution paths?
+- Juggling asynchronous operations with flow control optimization?
+- Building a mock server because your upstream is unstable or often offline?
 
-### Overview
+What if there exists a way to...
+- Allow you to create a simple structure that clearly describes your application and/or business logic lifecycle?
+- Promote sharing by offering deferred execution for all constructed flows?
+- Automatically instrument analytics for all execution paths?
+
+This is `Mercy`.
+
+
+# API
+See the detailed [API Reference](https://github.com/bmille29/mercy/blob/master/API.md).
+
+## Examples
+
+#### Building basic flows
+```javascript
+const Mercy = require('mercy');
+
+const fail = function (data, next) { return next(new Error('some failure'); };
+const noop = function (data, next) { return next(); };
+const echo = function (value, next) { return next(null, value); };
+
+
+// Empty
+const empty = Mercy.flow();
+
+
+// Series
+// - Note: Series automatically propagates input
+let series = Mercy.flow(Mercy.input(), echo);     // Rest () notation   
+let series = Mercy.flow([Mercy.input(), echo]);   // Array [] notation  
+let series = Mercy.flow({                         // Object {} notation
+    Mercy.input(),      // Pre-built convenience flow to get flow input attached to a key.
+    echo                // All raw functions get transformed to Mercy Flows automatically
+}).series();
+
+Mercy.execute('foobar', series, (err, meta, data, result) => {
+
+    // console.log(meta);      // returns [object] - Current flow meta data (timers / analytics)
+    // console.log(data);      // returns [object] - Flow data object. Contains all information for flow and subflows
+    // console.log(result);    // returns 'foobar'
+});
+
+
+// Parallel
+// - Note: Parallel does not propagate input. You must specify final() and select results. Can't expect us to read your mind.
+const parallel = Mercy.flow({
+    input: Mercy.input(),       // Pre-built convenience flow to get flow input attached to a key.
+    echo: echo                  // Since input is not propagated, echo is executed with (data, next)
+}).final((data, next) => {
+
+    return next(null, [data.input.result, data.echo.result]);
+});
+
+Mercy.execute('foobar', parallel, (err, meta, data, result) => {
+
+    // console.log(result);    // returns ['foobar', [object]] - [object] is the data object
+});
+
+
+// Auto
+// - Note: Auto does not propagate input. However, it does make use of dependency injection.
+//      You must specify final() and select results.
+const auto = Mercy.flow({
+    input: Mercy.input(),       // Pre-built convenience flow to get flow input attached to a key.
+    echo: ['input', echo]       // Here we use dependency injection, echo is executed with (value, next) where (value === data.input.result)
+}).final((data, next) => {
+
+    return next(null, [data.input.result, data.echo.result]);
+});
+
+Mercy.execute('foobar', auto, (err, meta, data, result) => {
+
+    // console.log(result);    // returns ['foobar', 'foobar']
+});
+```
+
+#### Lets play a game
+```javascript
+const Mercy = require('mercy');
+
+// Using additional flow options, determine the output
+let count = 0;
+const opts = { times: 3, interval: 64 };
+const fail = Mercy.flow((data, next) => { return next(new Error(`Count: ${++count}`)); });
+
+const flow = Mercy.flow().timeout(500).tasks({
+    wait: Mercy.wait(1000),
+    foobar: ['wait', fail.retry(opts)]
+});
+
+Mercy.execute(flow, (err, meta, data, result) => {
+
+    // console.log(err);
+    // console.log(count);
+    // console.log(result);
+});
+```
+
+
+# Usage
+
+Usage is a two steps process. First, a flow is constructed using the provided types and options:
 
 ```javascript
+const foo = function () {};
 
-// Feature set
+const flow1 = Mercy.flow(foo)              // series   - Rest () notation   
+const flow2 = Mercy.flow([foo]);           // series   - Array [] notation  
+const flow3 = Mercy.flow({ task_0: foo }); // parallel - Object {} notation
+const flow4 = Mercy.flow({                 // auto (dependencies get injected via `...spread` operator)
+    foo: foo,
+    bar: ['foo', foo]
+});
+```
 
-A flow control library that provides several, common, pre-built flows.
-A flow is simply a grouping of higher-order functions which are executed in a given order.
+Note that **mercy** flow objects are immutable which means every additional rule added (e.g. `.timeout(1000)`) will return a
+new schema object.
 
-In other words, it is a glorified wrapper for business logic.
+Then the flow is executed:
 
+```javascript
+Mercy.execute(flow, (err, meta, data, next) => {
 
-Ability to...
+    // Your bits here
+});
 
-- Follow Unix style _(do one thing really well)_ pattern
-- Unify flow control across both `test cases` and `route handlers` (business logic)
+// Mercy Flows can directly call `flow.execute(data, callback)`.
 
-- Contain several "convenience" flows for common use cases.
-    - Libraries / route handlers / business logic
-        - wreck: wreck()
+flow.execute((err, meta, data, next) => {
 
-    - Test Cases
-        - compose: creates an instance of a REST API server
-            - Hapi: (manifest, glue options)
-            - Electrode: (config)
-        - start: ('ref compose' -> start server)
-        - prepare: [compose, start] (automatically references server from compose)
-        - restart ('ref compose / prepare' -> stop & start)
-        - stop: ('ref compose / prepare' -> start server)
+    // Your bits here
+});
+```
 
-        - echo: Mercy.prepare().echo('headers.cookie');
-            - Hoek.reach(request, 'headers.cookie');
+When passing a non-type flow object, the module converts it internally to a flow() type equivalent:
 
-        - inject: server.inject()
-
-        - mock: Utilize nock + lab flags to automatically generate req/res fixtures for integration tests.
-            - using simple flags to `refresh` and perform offline `unit` testing.
-            - ability to run all tests in parallel
-
-    - Common
-        - Validate: Joi.validate('ref', schema)
-        - transform: hoek.transform()
-        - custom: Pass function to be executed. Injection tricks work here as well.
-
-
-- Allow contextualization
-    - similar to joi creating new instances with updated configuration
-    - similar to wreck.defaults()
-    - must support "per request" contextualization in some fashion.
-
-
-- Allows fine grained control of flows
-    - timeout: (ms)
-    - retry: async.retry(3) async.retry({ attempts: 3, interval: 1000 })
-    - abortEarly:
-    - optional:
-    - wait: (setTimeout)
-    - Mercy.any().wait()
-
-
-- Allows construction of `new flows` / `subflows`
-    - race: returns the first flow to complete successfully
-    - alternatives: Try one first, if doesnt work then try next
-    - switch: based on specified data.*.value then execute single function
-        - Needed for supporting different verticals
-        - Allows for simplified output formats
-
-    - auto
-    - parallel
-    - series
-
-    - append: row
-    - concat: column
-
-    - merge: Merging refers to combining the two flows together, preserving their order. Depending on the context it could keep only the unique records or preserve them.
-
-    - join: Joining refers to keeping only the records common to both lists.
-
-
-- Allow `nesting` and thereby...
-    - Allow plugins to share common flows
-        - Ownership, responsibility, updates are controlled by single, proper & consistent source.
-        - peer dependences and requirements manage any changes
-
-
-    - Allows extensions (pending initial concept, management will likely change)
-        - Flow plugin will manage all extensions for a given server.
-        - Any plugin wishing to have common flows utilized will be required to "server.expose" their flows.
-
-
-- Development / Debugging
-    - tree(): pretty prints the entire flow tree along with any tags, descriptions, etc
-    - errors: specific error messages like Joi. Unlike async.auto() which says "inexistent dependency".
-
-
-- Analytics
-    - Automatic instrumentation of all (flows / subflows / tasks)
-    - Immediate identification of errors, flow, and subsection
-    - Can use to generate flame graphs and optimize specific to business logic.
-        - Records runtimes of any given (flow / subflow / task)
-        - Records both order and (series / parallel)
-        - Maybe records memory utilization for a specific flow?
-
+```javascript
+const flow1 = { foo: () => {} };
+const flow2 = Mercy.flow({ foo: Mercy.flow(() => ()) });
 ```
