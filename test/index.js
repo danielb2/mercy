@@ -829,6 +829,147 @@ describe('Mercy', () => {
         });
     });
 
+    it('flow().tasks()', (done) => {
+
+        const flow = Mercy.flow().tasks(internals.noop);
+
+        Mercy.execute(flow, (err, meta, data, result) => {
+
+            expect(err).to.not.exist();
+            expect(flow._children).to.have.length(1);
+            expect(result).to.be.undefined();
+
+            done();
+        });
+    });
+
+    it('clone() tasks', (done) => {
+
+        const foo = Mercy.flow({ noop: internals.noop });
+        const bar = foo.tasks({ noop2: internals.noop });
+
+        expect(foo._children.pop().label).to.equal('noop');
+        expect(bar._children.pop().label).to.equal('noop2');
+
+        done();
+    });
+
+    it('clone() series', (done) => {
+
+        const foo = Mercy.flow({ noop: internals.noop });
+        const bar = foo.series();
+
+        Code.settings.comparePrototypes = true;
+
+        expect(foo).to.not.equal(bar);
+        expect(foo._style).to.equal('parallel');
+        expect(bar._style).to.equal('series');
+
+        Code.settings.comparePrototypes = false;
+
+        done();
+    });
+
+    it('clone() parallel', (done) => {
+
+        const foo = Mercy.flow(internals.noop);
+        const bar = foo.parallel();
+
+        Code.settings.comparePrototypes = true;
+
+        expect(foo).to.not.equal(bar);
+        expect(foo._style).to.equal('series');
+        expect(bar._style).to.equal('parallel');
+
+        Code.settings.comparePrototypes = false;
+
+        done();
+    });
+
+    it('clone() auto', (done) => {
+
+        const foo = Mercy.flow(internals.noop);
+        const bar = foo.auto();
+
+        Code.settings.comparePrototypes = true;
+
+        expect(foo).to.not.equal(bar);
+        expect(foo._style).to.equal('series');
+        expect(bar._style).to.equal('auto');
+
+        Code.settings.comparePrototypes = false;
+
+        done();
+    });
+
+    it('clone() series - fails with dependencies', (done) => {
+
+        const foo = Mercy.flow({ noop: internals.noop, noop2: ['noop', internals.noop] });
+        expect(foo._style).to.equal('auto');
+        expect(foo.series).to.throw();
+
+        done();
+    });
+
+    it('clone() parallel - fails with dependencies', (done) => {
+
+        const foo = Mercy.flow({ noop: internals.noop, noop2: ['noop', internals.noop] });
+        expect(foo._style).to.equal('auto');
+        expect(foo.parallel).to.throw();
+
+        done();
+    });
+
+    it('clone() required', (done) => {
+
+        const foo = Mercy.flow(internals.noop);
+        const bar = foo.optional().required();
+
+        Code.settings.comparePrototypes = true;
+
+        expect(foo).to.equal(bar);
+        expect(bar._settings.optional).to.be.false();
+
+        Code.settings.comparePrototypes = false;
+
+        done();
+    });
+
+    it('clone() optional', (done) => {
+
+        const foo = Mercy.flow(internals.noop);
+        const bar = foo.optional();
+
+        Code.settings.comparePrototypes = true;
+
+        expect(foo).to.not.equal(bar);
+        expect(foo._settings.optional).to.be.false();
+        expect(bar._settings.optional).to.be.true();
+
+        Code.settings.comparePrototypes = false;
+
+        done();
+    });
+
+    it('clone() retry', (done) => {
+
+        Code.settings.comparePrototypes = true;
+
+        const opts = { times: 3, interval: 256 };
+        const foo = Mercy.flow(internals.noop);
+        const bar = foo.retry(opts);
+
+        Code.settings.comparePrototypes = true;
+
+        expect(foo).to.not.equal(bar);
+        expect(foo._settings.retry).to.be.null();
+        expect(bar._settings.retry).to.equal(opts);
+
+        Code.settings.comparePrototypes = false;
+
+        done();
+    });
+
 
     // TODO:
     // flow.tree()
