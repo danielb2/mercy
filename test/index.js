@@ -436,7 +436,10 @@ describe('Mercy', () => {
         const flow = Mercy.flow({
             foo: internals.noop,
             bar: internals.noop,
-            foobar: ['foo', 'bar', Mercy.input()]
+            foobar: ['foo', 'bar', Mercy.input().final((data, next) => {
+
+                return next(null, data.input);
+            })]
         }).final((data, next) => {
 
             return next(null, data.foobar.result);
@@ -519,7 +522,6 @@ describe('Mercy', () => {
             expect(err).to.not.exist();
             expect(meta).to.be.an.object();
             expect(data).to.be.an.object();
-
             expect(result).to.equal('foobar');
 
             done();
@@ -953,8 +955,6 @@ describe('Mercy', () => {
 
     it('clone() retry', (done) => {
 
-        Code.settings.comparePrototypes = true;
-
         const opts = { times: 3, interval: 256 };
         const foo = Mercy.flow(internals.noop);
         const bar = foo.retry(opts);
@@ -964,6 +964,25 @@ describe('Mercy', () => {
         expect(foo).to.not.equal(bar);
         expect(foo._settings.retry).to.be.null();
         expect(bar._settings.retry).to.equal(opts);
+
+        Code.settings.comparePrototypes = false;
+
+        done();
+    });
+
+    it('clone() final', (done) => {
+
+        const final1 = (value, next) => { return next(null, 'foo'); };
+        const final2 = (value, next) => { return next(null, 'bar'); };
+
+        const foo = Mercy.flow(internals.noop).final(final1);
+        const bar = foo.final(final2);
+
+        Code.settings.comparePrototypes = true;
+
+        expect(foo).to.not.equal(bar);
+        expect(foo._final).to.equal(final1);
+        expect(bar._final).to.equal(final2);
 
         Code.settings.comparePrototypes = false;
 
@@ -994,462 +1013,4 @@ describe('Mercy', () => {
     // 11) Mercy.mock()
         // Nock setup specifically for server. Might want to combine with Mercy.prepare()?
 
-
-    // it('can prepare', (done) => {
-    //
-    //     const manifest = require('./cfg/basic');
-    //     // const flow = Mercy.prepare({ manifest });
-    //
-    //     // const flow = Mercy.flow({ one: 'two' });
-    //     const flow = Mercy.flow('label', 'deps', () => {});
-    //
-    //
-    //     Mercy.execute(flow, (err, meta, result) => {
-    //
-    //         expect(meta).to.exist();
-    //         expect(result).to.exist();
-    //         // expect(result.manifest).to.exist();
-    //         // expect(result.settings).to.exist();
-    //         // expect(result.server).to.exist();
-    //
-    //         done();
-    //     });
-    // });
-
-    // it('can prepare', (done) => {
-    //
-    //     const mercy = Mercy.prepare();
-    //
-    //     expect(mercy._server).to.equal(null);
-    //     expect(mercy._settings).to.be.an.object();
-    //     expect(mercy._tasks).to.have.length(1);
-    //
-    //     done();
-    // });
-    //
-    // it('loads a basic manifest', (done) => {
-    //
-    //     const manifest = require('./cfg/basic');
-    //     const mercy = Mercy.prepare(manifest);
-    //
-    //     expect(mercy._settings).to.exist();
-    //     expect(mercy._settings.manifest).to.be.an.object();
-    //
-    //     done();
-    // });
-    //
-    // it('loads basic preConnections', (done) => {
-    //
-    //     const manifest = require('./cfg/basic');
-    //     const options = { preConnections: (server, next) => { return next(); } };
-    //
-    //     Mercy.prepare(manifest, options).final((err, data) => {
-    //
-    //         expect(err).to.not.exist();
-    //
-    //         expect(data.prepare.result.server).to.be.an.object();
-    //         expect(data.prepare.result.settings).to.be.an.object();
-    //
-    //         done()
-    //     });
-    // });
-    //
-    // it('loads basic preRegister', (done) => {
-    //
-    //     const manifest = require('./cfg/basic');
-    //     const options = { preRegister: internals.preRegister };
-    //
-    //     Mercy.prepare(manifest, options).final((err, data) => {
-    //
-    //         expect(err).to.not.exist();
-    //
-    //         expect(data.prepare.result.server).to.be.an.object();
-    //         expect(data.prepare.result.settings).to.be.an.object();
-    //
-    //         done()
-    //     });
-    // });
-    //
-    // it('performs minimal flow', (done) => {
-    //
-    //     const manifest = require('./cfg/basic');
-    //
-    //     Mercy.prepare(manifest).final((err, data) => {
-    //
-    //         expect(err).to.not.exist();
-    //
-    //         expect(data.prepare.result.server).to.be.an.object();
-    //         expect(data.prepare.result.settings).to.be.an.object();
-    //
-    //         done()
-    //     });
-    // });
-    //
-    // it('performs simple injection', (done) => {
-    //
-    //     Mercy.prepare()
-    //         // .inject('/')
-    //         .inject('l1', 'd1', 'd2', '/')
-    //         .inject('l1', '', '/')
-    //         .final((err, data) => {
-    //
-    //             expect(err).to.not.exist();
-    //
-    //             expect(data.prepare.result).to.be.an.object();
-    //             expect(data['task_0'].result.statusCode).to.equal(404);
-    //
-    //             done();
-    //         });
-    // });
-    //
-    // it('performs simple injections (automatic labels)', (done) => {
-    //
-    //     Mercy.prepare()
-    //         .inject('label1', '/')              // label1 is label
-    //         .inject('label1', '/foo')           // dependecy detected
-    //         .inject({ label: 'label1', ... })   // label1 conflict with first
-    //         .final((err, data) => {
-    //
-    //             expect(err).to.not.exist();
-    //
-    //             expect(data.prepare.result).to.be.an.object();
-    //             expect(data['task_0'].result.statusCode).to.equal(404);
-    //             expect(data['task_1'].result.statusCode).to.equal(404);
-    //
-    //             done();
-    //         });
-    // });
-    //
-    // it('performs simple injection (specific labels)', (done) => {
-    //
-    //     Mercy.prepare()
-    //         .inject('test', '/')
-    //         .final((err, data) => {
-    //
-    //             expect(err).to.not.exist();
-    //
-    //             expect(data.prepare.result).to.be.an.object();
-    //             expect(data.test.result.statusCode).to.equal(404);
-    //
-    //             done();
-    //         });
-    // });
-    //
-    // it('rejects simple injection (conflict labels)', (done) => {
-    //
-    //     Mercy.prepare()
-    //         .inject('test', '/')
-    //         .inject('test', '/')
-    //         .final((err, data) => {
-    //
-    //             expect(err).to.exist();
-    //             expect(data.prepare.result).to.be.an.object();
-    //
-    //             done();
-    //         });
-    // });
-    //
-    // it('performs injection with options', (done) => {
-    //
-    //     Mercy.prepare()
-    //         .inject('test', { endpoint: '/' })
-    //         .final((err, data) => {
-    //
-    //             expect(err).to.not.exist();
-    //
-    //             expect(data.prepare.result).to.be.an.object();
-    //             expect(data.test.result.statusCode).to.equal(404);
-    //
-    //             done();
-    //         });
-    // });
-    //
-    //
-    // it('allows custom joi validation', (done) => {
-    //
-    //     const manifest = require('./cfg/basic');
-    //
-    //     Mercy.prepare(manifest).final((err, data) => {
-    //
-    //         expect(err).to.not.exist();
-    //
-    //         done()
-    //     });
-    // });
-
-    // it('loads basic preConnection', (done) => {
-    //
-    //     const manifest = require('./cfg/base');
-    //     const options = { preConnection: internals.preConnection };
-    //
-    //     Insync.auto({
-    //         prepare: Mercy.prepare(manifest, options)
-    //     }, (err, data) => {
-    //
-    //         expect(err).to.not.exist();
-    //
-    //         expect(data.prepare.result.server).to.exist();
-    //         expect(data.prepare.result.settings).to.exist();
-    //
-    //         done();
-    //     });
-    // });
-    //
-    // it('loads basic preRegister', (done) => {
-    //
-    //     const manifest = require('./cfg/base');
-    //     const options = { preRegister: internals.preRegister };
-    //
-    //     Insync.auto({
-    //         prepare: Mercy.prepare(manifest, options)
-    //     }, (err, data) => {
-    //
-    //         expect(err).to.not.exist();
-    //
-    //         expect(data.prepare.result.server).to.exist();
-    //         expect(data.prepare.result.settings).to.exist();
-    //
-    //         done();
-    //     });
-    // });
-    //
-    // it('performs injection', (done) => {
-    //
-    //     const manifest = require('./cfg/base');
-    //     const options = { preRegister: internals.preRegister };
-    //     const endpoint = { method: 'GET', url: '/status' };
-    //
-    //     Insync.auto({
-    //         prepare: Mercy.prepare(manifest, options),
-    //         checkup: ['prepare', Mercy.inject(endpoint)]
-    //     }, (err, data) => {
-    //
-    //         expect(err).to.not.exist();
-    //         expect(data.checkup.res.result).to.equal({ status: 'ok' });
-    //
-    //         done();
-    //     });
-    // });
-    //
-    // it('performs injection', (done) => {
-    //
-    //     const manifest = require('./cfg/base');
-    //     const options = { preRegister: internals.preRegister };
-    //     const endpoint = {
-    //         method: 'GET',
-    //         url: '/status',
-    //         headers: { foo: 'bar', cookie: 'foo=bar;' }
-    //     };
-    //
-    //     const endpoint = { method, path, payload, ... };
-    //     const extract = {
-    //         headersFrom: ['label1', 'label2'],    // performs a fold left merge request.headers (occurs prior to )
-    //         cookiesFrom: ['label4']     // performs a fold left merge of res['set-cookies'] values.
-    //     };
-    //
-    //     // Method chaining
-    //     // - alias (label, key, name)
-    //     Mercy.prepare(manifest, options)
-    //         .inject({ label: 'one', { endpoint, extract } })
-    //         .inject({ label: 'two',   depends: ['one'], { endpoint, extract } })
-    //         .inject({ label: 'three', depends: ['two'], { endpoint, extract } })
-    //         .inject({ label: 'four',  depends: ['one', 'two'], { endpoint, extract } })
-    //         .final((err, data) => {
-    //
-    //             expect(err).to.not.exist();
-    //             expect(data.checkup.result.server).to.exist();
-    //             done();
-    //         });
-    //
-    //     // Method chaining v2 (preferred)
-    //     Mercy.prepare(manifest, options)
-    //         .inject('one', { endpoint, extract })
-    //         .inject('two', ['one'], { endpoint, extract })
-    //         .inject('two', ['one'], { endpoint, extract })
-    //         .inject('three', ['two'], { endpoint, extract })
-    //         .inject('four', ['two', 'three'], { endpoint, extract })
-    //         .final((err, data) => {
-    //
-    //             expect(err).to.not.exist();
-    //             expect(data.checkup.result.server).to.exist();
-    //             done();
-    //         });
-    //
-    //
-    //     // Async/Insync Auto()
-    //     const mercy = Mercy.prepare(manifest, options)
-    //     Insync.auto({
-    //         one:    mercy.inject(endpoint, extract),
-    //         two:   ['one', mercy.inject(endpoint, extract)],
-    //         three: ['two', mercy.inject(endpoint, extract)],
-    //         four:  ['one', 'two', mercy.inject(endpoint, extract)]
-    //     }, (err, data) => {
-    //
-    //         expect(err).to.not.exist();
-    //         expect(data.checkup.result.server).to.exist();
-    //         done();
-    //     });
-    // });
-    //
-
-    // it('fooooooobaaar', (done) => {
-    //
-    //     const manifest = require('./cfg/base');
-    //     const options = { preRegister: internals.preRegister };
-    //     const endpoint = { method: 'GET', url: '/status', headers: { foo: 'bar' } };
-    //     //
-    //     // const options = {
-    //     //     headersFrom: ['checkup', 'foo', 'bar'],
-    //     //     setCookieFrom: ['foo', 'bar',]
-    //     // }
-    //
-    //     Insync.auto({
-    //         prepare: Mercy.prepare(manifest, options),
-    //         checkup: ['prepare', Mercy.inject(endpoint)],
-    //         foo:     ['prepare', Mercy.inject(endpoint)],
-    //         bar:     ['prepare', Mercy.inject(endpoint)],
-    //         foobar:  ['prepare', Mercy.inject(endpoint, options)],
-    //     }, (err, data) => {
-    //
-    //         expect(err).to.not.exist();
-    //
-    //         expect(data.checkup.result.server).to.exist();
-    //
-    //         done();
-    //     });
-    // });
-
-
-
-    //
-    // it('loads a base server', (done) => {
-    //
-    //     // Dynamically load new plugin with test route
-    //
-    //     const mock = {
-    //         rotues: [
-    //             {
-    //                 method: '*',
-    //                 path: '/cart/{p*}',
-    //                 response: [
-    //                     require('./mock/foobar')
-    //                 ]
-    //             }
-    //         ]
-    //     };
-    //
-    //
-    //     Insync.auto({
-    //         upstream: Mercy.prepare(),
-    //         server:   Mercy.prepare(manifest),
-    //         inject:   ['server, upstream', Mercy.inject()]
-    //     }, (err, data) => {
-    //
-    //         expect(err).to.not.exist();
-    //
-    //         // Validate output
-    //         const statusCode = data.signup.res.statusCode;
-    //         const cookies = data.signup.res.headers['set-cookie'];
-    //         const payload = data.signup.res.result;
-    //
-    //         expect(statusCode).to.equal(200);
-    //         expect(cookies).to.match(/yaht=Fe26/);
-    //         expect(payload).to.equal({ status: 'ok' });
-    //
-    //         done();
-    //     });
-    // });
-    //
-    // it('returns 200', (done) => {
-    //
-    //     const server = new Hapi.Server();
-    //     server.connection();
-    //
-    //     const plugin = { register: internals.plugins.heartbeat };
-    //     server.register(plugin, (err) => {
-    //
-    //         expect(err).to.not.exist();
-    //         server.start((err) => {
-    //
-    //             expect(err).to.not.exist();
-    //             server.inject('/heartbeat', (res) => {
-    //
-    //                 expect(res.statusCode).to.equal(200);
-    //                 expect(res.result).to.equal({ status: 'ok' });
-    //                 done();
-    //             });
-    //         });
-    //     });
-    // });
-    //
-    // it('throws with bad configuration', (done) => {
-    //
-    //     const server = new Hapi.Server();
-    //     server.connection();
-    //
-    //     const plugin = {
-    //         register: internals.plugins.heartbeat,
-    //         options: { bad: 'configuration' }
-    //     };
-    //
-    //     server.register(plugin, (err) => {
-    //
-    //         expect(err).to.exist();
-    //         expect(err.message).to.equal('"bad" is not allowed');
-    //         done();
-    //     });
-    // });
-    //
-    // it('set a custom path', (done) => {
-    //
-    //     const server = new Hapi.Server();
-    //     server.connection();
-    //
-    //     const plugin = {
-    //         register: internals.plugins.heartbeat,
-    //         options: { path: '/custom/path' }
-    //     };
-    //
-    //
-    //     server.register(plugin, (err) => {
-    //
-    //         expect(err).to.not.exist();
-    //         server.start((err) => {
-    //
-    //             expect(err).to.not.exist();
-    //             server.inject(plugin.options.path, (res) => {
-    //
-    //                 expect(res.statusCode).to.equal(200);
-    //                 expect(res.result).to.equal({ status: 'ok' });
-    //                 done();
-    //             });
-    //         });
-    //     });
-    // });
-    //
-    // it('set a custom message', (done) => {
-    //
-    //     const server = new Hapi.Server();
-    //     server.connection();
-    //
-    //     const plugin = {
-    //         register: internals.plugins.heartbeat,
-    //         options: { message: { custom: 'message' } }
-    //     };
-    //
-    //     server.register(plugin, (err) => {
-    //
-    //         expect(err).to.not.exist();
-    //         server.start((err) => {
-    //
-    //             expect(err).to.not.exist();
-    //             server.inject('/heartbeat', (res) => {
-    //
-    //                 expect(res.statusCode).to.equal(200);
-    //                 expect(res.result).to.equal(plugin.options.message);
-    //                 done();
-    //             });
-    //         });
-    //     });
-    // });
 });
