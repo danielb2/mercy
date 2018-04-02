@@ -95,7 +95,7 @@ Mercy.execute('foobar', series, (err, meta, data, result) => {
 **Parallel**
 ```javascript
 // Parallel does not propagate flow's input.
-// Similar to `auto()`, you must specify a `final()`` task to select results.
+// Similar to `auto()`, you must specify a `final()` task to select results.
 const parallel = Mercy.flow({
     input: Mercy.input(),       // Pre-built convenience flow to get flow input attached to some key.
     echo: echo                  // Since input is not propagated, echo is executed with (data, next)
@@ -114,7 +114,7 @@ Mercy.execute('foobar', parallel, (err, meta, data, result) => {
 **Auto**
 ```javascript
 // Auto does not propagate input. However, it does make use of dependency injection.
-// Similar to `parallel()`, you must specify a `final()`` task to select results.
+// Similar to `parallel()`, you must specify a `final()` task to select results.
 const auto = Mercy.flow({
     input: Mercy.input(),       // Pre-built convenience flow to get flow input attached to a key.
     echo: ['input', echo]       // Here we use dependency injection, echo is executed with (value, next) where (value === data.input.result)
@@ -130,27 +130,10 @@ Mercy.execute('foobar', auto, (err, meta, data, result) => {
 });
 ```
 
-## Adding complexity
+## Test case usage
 
 ```javascript
 const Mercy = require('mercy');
 
-let count = 0;
-const fail = Mercy.flow((value, next) => {
 
-    const error = new Error(`Count: ${++count}`);
-    return next(error, value);
-});
-
-const flow = Mercy.flow().retry(3).timeout(5000).tasks({
-    input: Mercy.input(),
-    wait: Mercy.wait(1000),
-    foobar: ['input', fail.optional()]
-});
-
-Mercy.execute('foobar', flow, (err, meta, data, result) => {
-
-    console.log({ count, err, result });        // { count: 1, err: null, result: null }
-    // Note if `foobar` were not `optional()`   // { count: 3, err: [Timeout Error], result: [Timeout Error] }
-});
 ```

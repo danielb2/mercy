@@ -989,6 +989,76 @@ describe('Mercy', () => {
         done();
     });
 
+    it('Mercy.compose()', (done) => {
+
+        const manifest = require('./cfg/basic');
+        const flow = Mercy.compose(manifest);
+
+        Mercy.execute(flow, (err, meta, data, result) => {
+
+            expect(err).to.not.exist();
+            expect(result.info.created).to.be.above(0);
+            expect(result.info.started).to.equal(0);
+        });
+
+        done();
+    });
+
+    it('Mercy.start()', (done) => {
+
+        const manifest = require('./cfg/basic');
+        const flow = Mercy.flow([
+            Mercy.compose(manifest),
+            Mercy.start()
+        ]);
+
+        Mercy.execute(flow, (err, meta, data, result) => {
+
+            expect(err).to.not.exist();
+            expect(result.info.created).to.be.above(0);
+            expect(result.info.started).to.be.above(0);
+        });
+
+        done();
+    });
+
+    it('Mercy.stop()', (done) => {
+
+        const manifest = require('./cfg/basic');
+        const flow = Mercy.flow([
+            Mercy.compose(manifest),
+            Mercy.start().final((server, next) => {
+
+                expect(server.info.started).to.be.above(0);
+                return next(null, server);
+            }),
+            Mercy.stop()
+        ]);
+
+        Mercy.execute(flow, (err, meta, data, result) => {
+
+            expect(err).to.not.exist();
+            expect(result.info.created).to.be.above(0);
+            expect(result.info.started).to.equal(0);
+        });
+
+        done();
+    });
+
+    it('Mercy.prepare()', (done) => {
+
+        const manifest = require('./cfg/basic');
+        const flow = Mercy.prepare(manifest);
+
+        Mercy.execute(flow, (err, meta, data, result) => {
+
+            expect(err).to.not.exist();
+            expect(result.info.created).to.be.above(0);
+            expect(result.info.started).to.be.above(0);
+        });
+
+        done();
+    });
 
     // TODO:
     // flow.tree()
@@ -1001,10 +1071,6 @@ describe('Mercy', () => {
     // 3.1) Hoek.transform()
     // 4) Enhance Mercy.input(schema)
         // Shorthand for input validation
-    // 5) Mercy.compose()
-    // 6) Mercy.start()
-    // 7) Mercy.stop()
-    // 8) Mercy.prepare() (compose + start)
     // 9) Mercy.inject()
     // 10) Mercy.wreck()
         // Mercy.wreck().defaults()
