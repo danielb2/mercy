@@ -436,10 +436,7 @@ describe('Mercy', () => {
         const flow = Mercy.flow({
             foo: internals.noop,
             bar: internals.noop,
-            foobar: ['foo', 'bar', Mercy.input().final((data, next) => {
-
-                return next(null, data.input);
-            })]
+            foobar: ['foo', 'bar', Mercy.input()]
         }).final((data, next) => {
 
             return next(null, data.foobar.result);
@@ -1079,8 +1076,71 @@ describe('Mercy', () => {
         done();
     });
 
+    it('Mercy.validate()', (done) => {
 
+        const schema = Joi.number();
+        const flow = Mercy.validate(schema);
 
+        Mercy.execute(32, flow, (err, meta, data, result) => {
+
+            expect(err).to.not.exist();
+            expect(result).to.equal(32);
+        });
+
+        done();
+    });
+
+    it('Mercy.input(schema)', (done) => {
+
+        const schema = Joi.number();
+        const flow = Mercy.input(schema);
+
+        Mercy.execute(32, flow, (err, meta, data, result) => {
+
+            expect(err).to.not.exist();
+            expect(result).to.equal(32);
+        });
+
+        done();
+    });
+
+    it('Mercy.transform()', (done) => {
+
+        const source = {
+            address: {
+                one: '123 main street',
+                two: 'PO Box 1234'
+            },
+            title: 'Warehouse',
+            state: 'CA'
+        };
+
+        const template = {
+            'person.address.lineOne': 'address.one',
+            'person.address.lineTwo': 'address.two',
+            'title': 'title',
+            'person.address.region': 'state'
+        };
+
+        const flow = Mercy.transform(template);
+
+        Mercy.execute(source, flow, (err, meta, data, result) => {
+
+            expect(err).to.not.exist();
+            expect(result).to.equal({
+                title: 'Warehouse',
+                person: {
+                    address: {
+                        lineOne: '123 main street',
+                        lineTwo: 'PO Box 1234',
+                        region: 'CA'
+                    }
+                }
+            });
+        });
+
+        done();
+    });
 
 
     // TODO:
