@@ -763,6 +763,25 @@ describe('Mercy', () => {
         });
     });
 
+    it('flow().timeout() parent overrides children', (done) => {
+
+        const flow = Mercy.flow().timeout(1000).tasks([
+            Mercy.wait(500).timeout(600),
+            Mercy.flow().series().tasks([
+                Mercy.wait(2000),           // runs... on interruption, waits for completion of current task.
+                Mercy.wait(2000)            // oops cant keep going (series)... exit out; parent timeout occurred;
+            ])
+        ]);
+
+        Mercy.execute(flow, (err, meta, data, result) => {
+
+            expect(err).to.exist();
+            expect(result).to.be.an.error(Error, 'Flow timeout of 1000(ms) occurred');
+
+            done();
+        });
+    });
+
     it('flow().optional()', (done) => {
 
         const flow = Mercy.flow(Mercy.wait(32), Mercy.wait(32)).timeout(1).optional();
@@ -1059,6 +1078,10 @@ describe('Mercy', () => {
 
         done();
     });
+
+
+
+
 
     // TODO:
     // flow.tree()
