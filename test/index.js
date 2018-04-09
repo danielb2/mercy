@@ -26,15 +26,18 @@ const internals = {
     echo: (value, next) => { return next(null, value); },
     console: (value, next) => {
 
+        console.log({value, next})
         console.log({ console: value });
         return next(null, value);
     },
-    preRegister: function (server, next) {
+    preRegister: (server, next) => {
 
         server.route({
             method: 'GET',
-            path: '/status/{p*}',
+            path: '/status',
             handler: (request, reply) => {
+
+                // console.log({ server: request })
 
                 return reply({ status: 'ok' });
             }
@@ -1142,24 +1145,58 @@ describe('Mercy', () => {
         done();
     });
 
+    it('Mercy.reach()', (done) => {
 
-    // TODO:
-    // flow.tree()
+        const flow = Mercy.reach('test.ing');
+        const input = { test: { ing: 'foobar' } };
 
-    // implement memory usage anaytics
+        Mercy.execute(input, flow, (err, meta, data, result) => {
 
-    // 1) Cloning when method chaining
-    // 2) Add flow.tasks()
-    // 3) Add Mercy.validate()
-    // 3.1) Hoek.transform()
-    // 4) Enhance Mercy.input(schema)
-        // Shorthand for input validation
-    // 9) Mercy.inject()
-    // 10) Mercy.wreck()
-        // Mercy.wreck().defaults()
-        // Need to consider how all options will work
-        // Might we want to automatically feed data into it?
-    // 11) Mercy.mock()
-        // Nock setup specifically for server. Might want to combine with Mercy.prepare()?
+            expect(err).to.not.exist();
+            expect(result).to.equal('foobar');
+        });
 
+        done();
+    });
+
+    it('Mercy.wreck()', (done) => {
+
+        const manifest = require('./cfg/basic');
+        const options = { preRegister: internals.preRegister };
+
+        const flow = Mercy.flow([
+            Mercy.prepare(manifest, options),
+            Mercy.transform({ uri: 'info.uri' }),
+            Mercy.wreck().get('/status').defaults({ json: true })
+        ]);
+
+        Mercy.execute(flow, (err, meta, data, result) => {
+
+            expect(err).to.not.exist();
+            expect(result).to.be.an.object();
+            expect(result.response).to.be.an.object();
+            expect(result.payload).to.equal({ status: 'ok' });
+
+            done();
+        });
+    });
+
+    it('Mercy.inject()', (done) => {
+
+        const manifest = require('./cfg/good');
+        const options = { preRegister: internals.preRegister };
+
+        const flow = Mercy.flow([
+            Mercy.prepare(manifest, options),
+            Mercy.inject('/status')
+        ]);
+
+        Mercy.execute(flow, (err, meta, data, result) => {
+
+            expect(err).to.not.exist();
+            expect(result).to.equal({ status: 'ok' });
+
+            done();
+        });
+    });
 });
