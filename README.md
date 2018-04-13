@@ -24,14 +24,14 @@ See the detailed [API Reference](https://github.com/bmille29/mercy/blob/master/A
 Usage is a two steps process. First, a flow must be constructed:
 
 ```javascript
-const foo = function () {};
+const echo = function (value, next) { return next(null, value); };
 
-const flow1 = Mercy.flow(foo)              // series   - Rest () notation   
-const flow2 = Mercy.flow([foo]);           // series   - Array [] notation  
-const flow3 = Mercy.flow({ task_0: foo }); // parallel - Object {} notation
+const flow1 = Mercy.flow(echo)              // series   - Rest () notation   
+const flow2 = Mercy.flow([echo]);           // series   - Array [] notation  
+const flow3 = Mercy.flow({ task_0: echo }); // parallel - Object {} notation
 const flow4 = Mercy.flow({                 // auto (dependencies get injected via `...spread` operator)
-    foo: foo,
-    bar: ['foo', foo]
+    echo: echo,
+    echoAgain: ['foo', echo]
 });
 ```
 
@@ -57,8 +57,18 @@ flow.execute((err, meta, data, next) => {
 When passing a non-type flow object, the module converts it internally to a flow() type equivalent:
 
 ```javascript
-const flow1 = { foo: () => {} };
-const flow2 = Mercy.flow({ foo: Mercy.flow(() => ()) });
+// The following is equivalent
+const foo = (data, next) => { return next(null, data) };
+const callback = (err, meta, data, result) => {
+
+    console.log(result);    // result is [data object]
+};
+
+const flow1 = { foo };
+const flow2 = Mercy.flow({ foo });
+
+Mercy.execute(flow1, callback);
+Mercy.execute(flow2, callback);
 ```
 
 
