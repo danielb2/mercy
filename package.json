@@ -16,9 +16,9 @@
   "scripts": {
     "clean": "rm -rf node_modules",
     "test": "node_modules/.bin/lab -m 90000",
-    "test-cov": "node_modules/.bin/lab -t 100 -m 90000 -v -p",
-    "test-cov-html": "node_modules/.bin/lab -r html -o coverage.html -m 90000 -p",
-    "test-cov-junit": "node_modules/.bin/lab -r junit -o coverage.xml -m 90000 -p"
+    "test-cov": "node_modules/.bin/lab -t 100 -m 90000 -v",
+    "test-cov-html": "node_modules/.bin/lab -r html -o coverage.html -m 90000",
+    "test-cov-junit": "node_modules/.bin/lab -r junit -o coverage.xml -m 90000"
   },
   "engines": {
     "node": ">=8.x.x",
@@ -33,7 +33,6 @@
     "joi": "13.x.x",
     "nock": "9.x.x",
     "urijs": "1.x.x",
-    "uuid": "^3.2.1",
     "wreck": "12.x.x"
   },
   "devDependencies": {

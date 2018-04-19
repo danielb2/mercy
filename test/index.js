@@ -883,8 +883,8 @@ describe('Mercy', () => {
 
             expect(err).to.not.exist();
             expect(result).to.equal(null)
-            expect(meta.bench.duration).to.be.between(256, 512);
-            expect(meta.timer.duration).to.be.between(256, 512);
+            expect(meta.bench.duration).to.be.within(256, 512);
+            expect(meta.timer.duration).to.be.within(256, 512);
 
             done();
         });
