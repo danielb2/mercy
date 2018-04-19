@@ -1,6 +1,6 @@
 {
   "name": "mercy",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Flow control library",
   "keywords": [
     "flow",
@@ -26,12 +26,14 @@
   },
   "dependencies": {
     "async": "2.x.x",
+    "fs-extra": "5.x.x",
     "glue": "4.x.x",
     "hoek": "4.x.x",
     "insync": "2.x.x",
     "joi": "13.x.x",
     "nock": "9.x.x",
-    "urijs": "^1.19.1",
+    "urijs": "1.x.x",
+    "uuid": "^3.2.1",
     "wreck": "12.x.x"
   },
   "devDependencies": {

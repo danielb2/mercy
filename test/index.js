@@ -3,11 +3,15 @@
 // Load modules
 
 const Code = require('code');
+const Crypto = require('crypto');
+const Fs = require('fs-extra');
 const Hapi = require('hapi');
 const Hoek = require('hoek');
+const Insync = require('insync');
 const Joi = require('joi');
 const Lab = require('lab');
-const Insync = require('insync');
+const Path = require('path');
+const Uuid = require('uuid');
 
 const Mercy = require('../lib');
 
@@ -26,22 +30,45 @@ const internals = {
     echo: (value, next) => { return next(null, value); },
     console: (value, next) => {
 
-        console.log({value, next})
-        console.log({ console: value });
+        console.log({ value });
         return next(null, value);
+    },
+    peak: ({ dir, label }) => {
+
+        return (last, next) => {
+
+            return next(null, { mocks: require(Path.resolve(`${dir}/${label}.json`)) });
+        };
+    },
+    clean: ({ dir, label }) => {
+
+        return (last, next) => {
+
+            Fs.remove(Path.resolve(`${dir}/${label}.json`));
+            return next(null, last);
+        };
     },
     preRegister: (server, next) => {
 
-        server.route({
-            method: 'GET',
-            path: '/status',
-            handler: (request, reply) => {
+        const results = [];
+        const rand = (request, reply) => {
 
-                // console.log({ server: request })
+            const rand = Uuid.v4();
+            results.push(rand);
+            return reply({ rand, results });
+        };
 
-                return reply({ status: 'ok' });
-            }
-        });
+        const status = (request, reply) => {
+
+            const status = 'ok';
+            results.push(status);
+            return reply({ status, results });
+        };
+
+        server.route([
+            { method: 'GET', path: '/rand', handler: rand },
+            { method: 'GET', path: '/status', handler: status }
+        ]);
 
         return next();
     }
@@ -205,9 +232,7 @@ describe('Mercy', () => {
         expect(flow._children).to.have.length(1);
         expect(flow._children[0].task).to.be.a.object();
         expect(flow._children[0].task._children).to.have.length(1);
-        expect(flow._children[0].task._children[0].task).to.be.a.object();
-        expect(flow._children[0].task._children[0].task._children).to.have.length(1);
-        expect(flow._children[0].task._children[0].task._children[0].task).to.be.a.function();
+        expect(flow._children[0].task._children[0].task).to.be.a.function();
 
         done();
     });
@@ -599,9 +624,10 @@ describe('Mercy', () => {
         });
     });
 
-    it('Mercy.input() (multi param)', (done) => {
+    it('Mercy.input().validate() (single param)', (done) => {
 
-        const flow = Mercy.input();
+        const schema = Joi.string();
+        const flow = Mercy.input().validate(schema);
 
         Mercy.execute('foobar', flow, (err, meta, data, result) => {
 
@@ -610,6 +636,23 @@ describe('Mercy', () => {
             expect(data).to.be.an.object();
 
             expect(result).to.equal('foobar');
+
+            done();
+        });
+    });
+
+    it('Mercy.input().validate() (multi param)', (done) => {
+
+        const schema = Joi.array().items(Joi.string());
+        const flow = Mercy.input().validate(schema);
+
+        Mercy.execute('foobar', 'foobar', flow, (err, meta, data, result) => {
+
+            expect(err).to.not.exist();
+            expect(meta).to.be.an.object();
+            expect(data).to.be.an.object();
+
+            expect(result).to.equal(['foobar', 'foobar']);
 
             done();
         });
@@ -721,14 +764,14 @@ describe('Mercy', () => {
 
     it('flow().wait()', (done) => {
 
-        const flow = Mercy.flow().wait(32);
+        const flow = Mercy.flow().wait(256);
 
         Mercy.execute(flow, (err, meta, data, result) => {
 
             expect(err).to.not.exist();
             expect(result).to.be.undefined();
-            expect(meta.bench.duration).to.be.at.least(32);
-            expect(meta.timer.duration).to.be.at.least(32);
+            expect(meta.bench.duration).to.be.at.least(256);
+            expect(meta.timer.duration).to.be.at.least(256);
 
             done();
         });
@@ -736,14 +779,14 @@ describe('Mercy', () => {
 
     it('Mercy.wait()', (done) => {
 
-        const flow = Mercy.wait(32);
+        const flow = Mercy.wait(256);
 
         Mercy.execute(flow, (err, meta, data, result) => {
 
             expect(err).to.not.exist();
-            expect(result).to.be.equal(32);
-            expect(meta.bench.duration).to.be.at.least(32);
-            expect(meta.timer.duration).to.be.at.least(32);
+            expect(result).to.be.equal(256);
+            expect(meta.bench.duration).to.be.at.least(256);
+            expect(meta.timer.duration).to.be.at.least(256);
 
             done();
         });
@@ -751,7 +794,7 @@ describe('Mercy', () => {
 
     it('flow().timeout()', (done) => {
 
-        const flow = Mercy.flow(Mercy.wait(32), Mercy.wait(32)).timeout(1);
+        const flow = Mercy.flow(Mercy.wait(256), Mercy.wait(256)).timeout(1);
 
         Mercy.execute(flow, (err, meta, data, result) => {
 
@@ -784,12 +827,12 @@ describe('Mercy', () => {
 
     it('flow().optional()', (done) => {
 
-        const flow = Mercy.flow(Mercy.wait(32), Mercy.wait(32)).timeout(1).optional();
+        const flow = Mercy.flow(Mercy.wait(256), Mercy.wait(256)).timeout(1).optional();
 
         Mercy.execute(flow, (err, meta, data, result) => {
 
             expect(err).to.not.exist();
-            expect(result).to.equal(32);
+            expect(result).to.equal(256);
 
             done();
         });
@@ -797,16 +840,35 @@ describe('Mercy', () => {
 
     it('flow().series()', (done) => {
 
-        const flow = Mercy.flow(Mercy.wait(32), Mercy.wait(32)).series();
+        const flow = Mercy.flow(Mercy.wait(256), Mercy.wait(256)).series();
 
         expect(flow._style).to.equal('series');
 
         Mercy.execute(flow, (err, meta, data, result) => {
 
             expect(err).to.not.exist();
-            expect(result).to.equal(32);
-            expect(meta.bench.duration).to.be.at.least(64);
-            expect(meta.timer.duration).to.be.at.least(64);
+            expect(result).to.be.null();
+            expect(data.task_0.result).to.equal(256);
+            expect(data.task_1.result).to.equal(256);
+            expect(meta.bench.duration).to.be.at.least(512);
+            expect(meta.timer.duration).to.be.at.least(512);
+
+            done();
+        });
+    });
+
+    it('flow().waterfall()', (done) => {
+
+        const flow = Mercy.flow(Mercy.wait(256), Mercy.wait(256)).waterfall();
+
+        expect(flow._style).to.equal('waterfall');
+
+        Mercy.execute(flow, (err, meta, data, result) => {
+
+            expect(err).to.not.exist();
+            expect(result).to.equal(256);
+            expect(meta.bench.duration).to.be.at.least(512);
+            expect(meta.timer.duration).to.be.at.least(512);
 
             done();
         });
@@ -814,7 +876,7 @@ describe('Mercy', () => {
 
     it('flow().parallel()', (done) => {
 
-        const flow = Mercy.flow(Mercy.wait(32), Mercy.wait(32)).parallel();
+        const flow = Mercy.flow().parallel().tasks(Mercy.wait(256), Mercy.wait(256));
 
         expect(flow._style).to.equal('parallel');
 
@@ -822,8 +884,8 @@ describe('Mercy', () => {
 
             expect(err).to.not.exist();
             expect(result).to.equal(null)
-            expect(meta.bench.duration).to.be.between(32, 64);
-            expect(meta.timer.duration).to.be.between(32, 64);
+            expect(meta.bench.duration).to.be.between(256, 512);
+            expect(meta.timer.duration).to.be.between(256, 512);
 
             done();
         });
@@ -899,7 +961,7 @@ describe('Mercy', () => {
         Code.settings.comparePrototypes = true;
 
         expect(foo).to.not.equal(bar);
-        expect(foo._style).to.equal('series');
+        expect(foo._style).to.be.null();
         expect(bar._style).to.equal('parallel');
 
         Code.settings.comparePrototypes = false;
@@ -915,7 +977,7 @@ describe('Mercy', () => {
         Code.settings.comparePrototypes = true;
 
         expect(foo).to.not.equal(bar);
-        expect(foo._style).to.equal('series');
+        expect(foo._style).to.be.null();
         expect(bar._style).to.equal('auto');
 
         Code.settings.comparePrototypes = false;
@@ -1164,18 +1226,18 @@ describe('Mercy', () => {
         const manifest = require('./cfg/basic');
         const options = { preRegister: internals.preRegister };
 
-        const flow = Mercy.flow([
-            Mercy.prepare(manifest, options),
-            Mercy.transform({ uri: 'info.uri' }),
-            Mercy.wreck().get('/status').defaults({ json: true })
-        ]);
+        const prepare = Mercy.prepare(manifest, options);
+        const transform = Mercy.transform({ 'options.baseUrl': 'info.uri' });
+        const wreck = Mercy.wreck().get('/status').defaults({ json: true });
+
+        const flow = Mercy.flow().tasks(prepare, transform, wreck);
 
         Mercy.execute(flow, (err, meta, data, result) => {
 
             expect(err).to.not.exist();
             expect(result).to.be.an.object();
             expect(result.response).to.be.an.object();
-            expect(result.payload).to.equal({ status: 'ok' });
+            expect(result.payload).to.equal({ status: 'ok', results: ['ok'] });
 
             done();
         });
@@ -1183,20 +1245,269 @@ describe('Mercy', () => {
 
     it('Mercy.inject()', (done) => {
 
-        const manifest = require('./cfg/good');
+        const manifest = require('./cfg/basic');
         const options = { preRegister: internals.preRegister };
 
-        const flow = Mercy.flow([
-            Mercy.prepare(manifest, options),
-            Mercy.inject('/status')
-        ]);
+        const prepare = Mercy.prepare(manifest, options);
+        const inject = Mercy.inject('/status');
+
+        const flow = Mercy.flow().tasks(prepare, inject);
 
         Mercy.execute(flow, (err, meta, data, result) => {
 
             expect(err).to.not.exist();
-            expect(result).to.equal({ status: 'ok' });
+            expect(result).to.equal({ status: 'ok', results: ['ok'] });
 
             done();
+        });
+    });
+
+    it('Mercy.mock() - local:false (default) does not record fixtures', (done) => {
+
+        const dir = `${__dirname}/fixtures`;
+        const label = `mock_${Uuid.v4()}`;
+        const manifest = require('./cfg/basic');
+
+        const prepare = Mercy.prepare(manifest, { preRegister: internals.preRegister });
+
+        Mercy.execute(prepare, (err, meta, data, result) => {
+
+            expect(err).to.not.exist();
+
+            const wreck = Mercy.wreck().get(`${result.info.uri}/status`).defaults({ json: true });
+            const record = wreck.mock({ mode: 'record', local: false, dir, label });
+            const peak = internals.peak({ dir, label });
+            const clean = internals.clean({ dir, label });
+
+            const flow = Mercy.flow().waterfall().tasks({ record, peak, clean });
+
+            Mercy.execute(flow, (err, meta, data, result) => {
+
+                expect(err).to.not.exist();
+                expect(data.peak.result.mocks).to.have.length(0);
+                expect(data.record.result.payload).to.equal({ status: 'ok', results: ['ok'] });
+
+                done();
+            });
+        });
+    });
+
+    it('Mercy.mock() - local:true records fixtures', (done) => {
+
+        const dir = `${__dirname}/fixtures`;
+        const label = `mock_${Uuid.v4()}`;
+        const manifest = require('./cfg/basic');
+
+        const prepare = Mercy.prepare(manifest, { preRegister: internals.preRegister });
+
+        Mercy.execute(prepare, (err, meta, data, result) => {
+
+            expect(err).to.not.exist();
+
+            const wreck = Mercy.wreck().get(`${result.info.uri}/status`).defaults({ json: true });
+            const record = wreck.mock({ mode: 'record', local: true, dir, label });
+            const peak = internals.peak({ dir, label });
+            const clean = internals.clean({ dir, label });
+
+            const flow = Mercy.flow().waterfall().tasks({ record, peak, clean });
+
+            Mercy.execute(flow, (err, meta, data, result) => {
+
+                expect(err).to.not.exist();
+                expect(data.peak.result.mocks).to.have.length(1);
+                expect(data.record.result.payload).to.equal({ status: 'ok', results: ['ok'] });
+
+                done();
+            });
+        });
+    });
+
+    it('Mercy.mock() - local:[ports] records fixtures', (done) => {
+
+        const dir = `${__dirname}/fixtures`;
+        const label = `mock_${Uuid.v4()}`;
+        const manifest = require('./cfg/basic');
+
+        const prepare = Mercy.prepare(manifest, { preRegister: internals.preRegister });
+
+        Mercy.execute(prepare, (err, meta, data, result) => {
+
+            expect(err).to.not.exist();
+
+            const wreck = Mercy.wreck().get(`${result.info.uri}/status`).defaults({ json: true });
+            const record = wreck.mock({ mode: 'record', local: [result.info.port], dir, label });
+            const peak = internals.peak({ dir, label });
+            const clean = internals.clean({ dir, label });
+
+            const flow = Mercy.flow().waterfall().tasks({ record, peak, clean });
+
+            Mercy.execute(flow, (err, meta, data, result) => {
+
+                expect(err).to.not.exist();
+                expect(data.peak.result.mocks).to.have.length(1);
+                expect(data.record.result.payload).to.equal({ status: 'ok', results: ['ok'] });
+
+                done();
+            });
+        });
+    });
+
+    it('Mercy.mock() - local:false (default) does not lockdown', (done) => {
+
+        const dir = `${__dirname}/fixtures`;
+        const label = `mock_${Uuid.v4()}`;
+        const manifest = require('./cfg/basic');
+
+        const prepare = Mercy.prepare(manifest, { preRegister: internals.preRegister });
+
+        Mercy.execute(prepare, (err, meta, data, result) => {
+
+            expect(err).to.not.exist();
+
+            const wreck = Mercy.wreck().get(`${result.info.uri}/status`).defaults({ json: true });
+            const lockdown = wreck.mock({ mode: 'lockdown', local: false, dir, label });
+
+            const flow = Mercy.flow().waterfall().tasks({ lockdown });
+
+            Mercy.execute(flow, (err, meta, data, result) => {
+
+                expect(err).to.not.exist();
+                expect(data.lockdown.result.payload).to.equal({ status: 'ok', results: ['ok'] });
+
+                done();
+            });
+        });
+    });
+
+    it('Mercy.mock() - local:[ports] (default) specified ports are on lockdown', (done) => {
+
+        const dir = `${__dirname}/fixtures`;
+        const label = `mock_${Uuid.v4()}`;
+        const manifest = require('./cfg/basic');
+
+        const prepare = Mercy.prepare(manifest, { preRegister: internals.preRegister });
+
+        Mercy.execute(prepare, (err, meta, data, result) => {
+
+            expect(err).to.not.exist();
+
+            const info = result.info;
+            const wreck = Mercy.wreck().get(`${info.uri}/status`).defaults({ json: true });
+            const lockdown = wreck.mock({ mode: 'lockdown', local: [info.port], dir, label });
+
+            const flow = Mercy.flow().waterfall().tasks({ lockdown });
+
+            Mercy.execute(flow, (err, meta, data, result) => {
+
+                expect(err).to.exist();
+                expect(err).to.be.an.error(`Client request error: Nock: Not allow net connect for "${info.host}:${info.port}/status"`)
+
+                done();
+            });
+        });
+    });
+
+    it('Mercy.mock() - local:true (default) all localhost connections are on lockdown', (done) => {
+
+        const dir = `${__dirname}/fixtures`;
+        const label = `mock_${Uuid.v4()}`;
+        const manifest = require('./cfg/basic');
+
+        const prepare = Mercy.prepare(manifest, { preRegister: internals.preRegister });
+
+        Mercy.execute(prepare, (err, meta, data, result) => {
+
+            expect(err).to.not.exist();
+
+            const info = result.info;
+            const wreck = Mercy.wreck().get(`${info.uri}/status`).defaults({ json: true });
+            const lockdown = wreck.mock({ mode: 'lockdown', local: true, dir, label });
+
+            const flow = Mercy.flow().waterfall().tasks({ lockdown });
+
+            Mercy.execute(flow, (err, meta, data, result) => {
+
+                expect(err).to.exist();
+                expect(err).to.be.an.error(`Client request error: Nock: Not allow net connect for "${info.host}:${info.port}/status"`)
+
+                done();
+            });
+        });
+    });
+
+    it('Mercy.mock() - record local:true & test wild', (done) => {
+
+        const dir = `${__dirname}/fixtures`;
+        const label = `mock_${Uuid.v4()}`;
+        const manifest = require('./cfg/basic');
+
+        const prepare = Mercy.prepare(manifest, { preRegister: internals.preRegister });
+
+        Mercy.execute(prepare, (err, meta, data, result) => {
+
+            expect(err).to.not.exist();
+
+            const wreck = Mercy.wreck().get(`${result.info.uri}/rand`).defaults({ json: true });
+            const record = wreck.mock({ mode: 'record', local: true, dir, label });
+            const wild = wreck.mock({ mode: 'wild', dir, label });
+            const peak = internals.peak({ dir, label });
+            const clean = internals.clean({ dir, label });
+
+            const flow = Mercy.flow().waterfall().tasks({ record, wild, peak, clean });
+
+            Mercy.execute(flow, (err, meta, data, result) => {
+
+                expect(err).to.not.exist();
+                expect(data.peak.result.mocks).to.have.length(1);
+
+                const record = data.record.result.payload;
+                const wild = data.wild.result.payload;
+
+                // expect(record.rand).to.be.a.number();
+                // expect(wild.rand).to.be.a.number();
+                expect(wild.rand).to.not.equal(record.rand);
+                expect(wild.results).to.equal([record.rand, wild.rand])
+
+                done();
+            });
+        });
+    });
+
+    it('Mercy.mock() - record local:true & test lockdown', (done) => {
+
+        const dir = `${__dirname}/fixtures`;
+        const label = `mock_${Uuid.v4()}`;
+        const manifest = require('./cfg/basic');
+
+        const prepare = Mercy.prepare(manifest, { preRegister: internals.preRegister });
+
+        Mercy.execute(prepare, (err, meta, data, result) => {
+
+            expect(err).to.not.exist();
+
+            const wreck = Mercy.wreck().get(`${result.info.uri}/rand`).defaults({ json: true });
+            const record = wreck.mock({ mode: 'record', local: true, dir, label });
+            const lockdown = wreck.mock({ mode: 'lockdown', dir, label });
+            const peak = internals.peak({ dir, label });
+            const clean = internals.clean({ dir, label });
+
+            const flow = Mercy.flow().waterfall().tasks({ record, lockdown, peak, clean });
+
+            Mercy.execute(flow, (err, meta, data, result) => {
+
+                expect(err).to.not.exist();
+                expect(data.peak.result.mocks).to.have.length(1);
+
+                const record = data.record.result.payload;
+                const lockdown = data.lockdown.result.payload;
+
+                // expect(record.rand).to.be.a.number();
+                // expect(lockdown.rand).to.be.a.number();
+                expect(lockdown.rand).to.equal(record.rand);
+                expect(lockdown.results).to.have.length(1);
+
+                done();
+            });
         });
     });
 });

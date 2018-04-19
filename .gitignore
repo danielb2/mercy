@@ -23,5 +23,5 @@ package-lock.json
 
 node_modules
 
-backup
-backup_2
+backup*
+test/fixtures
