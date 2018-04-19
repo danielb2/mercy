@@ -32,6 +32,7 @@
     "insync": "2.x.x",
     "joi": "13.x.x",
     "nock": "9.x.x",
+    "purdy": "3.x.x",
     "urijs": "1.x.x",
     "wreck": "12.x.x"
   },
