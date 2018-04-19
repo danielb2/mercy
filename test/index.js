@@ -11,7 +11,6 @@ const Insync = require('insync');
 const Joi = require('joi');
 const Lab = require('lab');
 const Path = require('path');
-const Uuid = require('uuid');
 
 const Mercy = require('../lib');
 
@@ -53,7 +52,7 @@ const internals = {
         const results = [];
         const rand = (request, reply) => {
 
-            const rand = Uuid.v4();
+            const rand = Crypto.randomBytes(4).readUInt32LE(0);
             results.push(rand);
             return reply({ rand, results });
         };
@@ -1265,7 +1264,7 @@ describe('Mercy', () => {
     it('Mercy.mock() - local:false (default) does not record fixtures', (done) => {
 
         const dir = `${__dirname}/fixtures`;
-        const label = `mock_${Uuid.v4()}`;
+        const label = `mock_${Crypto.randomBytes(4).readUInt32LE(0)}`;
         const manifest = require('./cfg/basic');
 
         const prepare = Mercy.prepare(manifest, { preRegister: internals.preRegister });
@@ -1295,7 +1294,7 @@ describe('Mercy', () => {
     it('Mercy.mock() - local:true records fixtures', (done) => {
 
         const dir = `${__dirname}/fixtures`;
-        const label = `mock_${Uuid.v4()}`;
+        const label = `mock_${Crypto.randomBytes(4).readUInt32LE(0)}`;
         const manifest = require('./cfg/basic');
 
         const prepare = Mercy.prepare(manifest, { preRegister: internals.preRegister });
@@ -1325,7 +1324,7 @@ describe('Mercy', () => {
     it('Mercy.mock() - local:[ports] records fixtures', (done) => {
 
         const dir = `${__dirname}/fixtures`;
-        const label = `mock_${Uuid.v4()}`;
+        const label = `mock_${Crypto.randomBytes(4).readUInt32LE(0)}`;
         const manifest = require('./cfg/basic');
 
         const prepare = Mercy.prepare(manifest, { preRegister: internals.preRegister });
@@ -1355,7 +1354,7 @@ describe('Mercy', () => {
     it('Mercy.mock() - local:false (default) does not lockdown', (done) => {
 
         const dir = `${__dirname}/fixtures`;
-        const label = `mock_${Uuid.v4()}`;
+        const label = `mock_${Crypto.randomBytes(4).readUInt32LE(0)}`;
         const manifest = require('./cfg/basic');
 
         const prepare = Mercy.prepare(manifest, { preRegister: internals.preRegister });
@@ -1382,7 +1381,7 @@ describe('Mercy', () => {
     it('Mercy.mock() - local:[ports] (default) specified ports are on lockdown', (done) => {
 
         const dir = `${__dirname}/fixtures`;
-        const label = `mock_${Uuid.v4()}`;
+        const label = `mock_${Crypto.randomBytes(4).readUInt32LE(0)}`;
         const manifest = require('./cfg/basic');
 
         const prepare = Mercy.prepare(manifest, { preRegister: internals.preRegister });
@@ -1410,7 +1409,7 @@ describe('Mercy', () => {
     it('Mercy.mock() - local:true (default) all localhost connections are on lockdown', (done) => {
 
         const dir = `${__dirname}/fixtures`;
-        const label = `mock_${Uuid.v4()}`;
+        const label = `mock_${Crypto.randomBytes(4).readUInt32LE(0)}`;
         const manifest = require('./cfg/basic');
 
         const prepare = Mercy.prepare(manifest, { preRegister: internals.preRegister });
@@ -1438,7 +1437,7 @@ describe('Mercy', () => {
     it('Mercy.mock() - record local:true & test wild', (done) => {
 
         const dir = `${__dirname}/fixtures`;
-        const label = `mock_${Uuid.v4()}`;
+        const label = `mock_${Crypto.randomBytes(4).readUInt32LE(0)}`;
         const manifest = require('./cfg/basic');
 
         const prepare = Mercy.prepare(manifest, { preRegister: internals.preRegister });
@@ -1463,8 +1462,8 @@ describe('Mercy', () => {
                 const record = data.record.result.payload;
                 const wild = data.wild.result.payload;
 
-                // expect(record.rand).to.be.a.number();
-                // expect(wild.rand).to.be.a.number();
+                expect(record.rand).to.be.a.number();
+                expect(wild.rand).to.be.a.number();
                 expect(wild.rand).to.not.equal(record.rand);
                 expect(wild.results).to.equal([record.rand, wild.rand])
 
@@ -1476,7 +1475,7 @@ describe('Mercy', () => {
     it('Mercy.mock() - record local:true & test lockdown', (done) => {
 
         const dir = `${__dirname}/fixtures`;
-        const label = `mock_${Uuid.v4()}`;
+        const label = `mock_${Crypto.randomBytes(4).readUInt32LE(0)}`;
         const manifest = require('./cfg/basic');
 
         const prepare = Mercy.prepare(manifest, { preRegister: internals.preRegister });
@@ -1501,8 +1500,8 @@ describe('Mercy', () => {
                 const record = data.record.result.payload;
                 const lockdown = data.lockdown.result.payload;
 
-                // expect(record.rand).to.be.a.number();
-                // expect(lockdown.rand).to.be.a.number();
+                expect(record.rand).to.be.a.number();
+                expect(lockdown.rand).to.be.a.number();
                 expect(lockdown.rand).to.equal(record.rand);
                 expect(lockdown.results).to.have.length(1);
 
