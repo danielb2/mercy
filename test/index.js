@@ -34,18 +34,22 @@ const internals = {
     },
     peak: ({ dir, label }) => {
 
-        return (last, next) => {
+        const peak = (last, next) => {
 
             return next(null, { mocks: require(Path.resolve(`${dir}/${label}.json`)) });
         };
+
+        return peak;
     },
     clean: ({ dir, label }) => {
 
-        return (last, next) => {
+        const clean = (last, next) => {
 
             Fs.remove(Path.resolve(`${dir}/${label}.json`));
             return next(null, last);
         };
+
+        return clean;
     },
     preRegister: (server, next) => {
 
