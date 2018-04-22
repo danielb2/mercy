@@ -5,9 +5,6 @@
 const Code = require('code');
 const Crypto = require('crypto');
 const Fs = require('fs-extra');
-const Hapi = require('hapi');
-const Hoek = require('hoek');
-const Insync = require('insync');
 const Joi = require('joi');
 const Lab = require('lab');
 const Path = require('path');
@@ -25,8 +22,10 @@ const expect = Code.expect;
 // Declare internals
 
 const internals = {
+    /* eslint-disable brace-style, hapi/hapi-scope-start */
     noop: (data, next) => { return next(); },
     echo: (value, next) => { return next(null, value); },
+    /* eslint-enable brace-style, hapi/hapi-scope-start */
     console: (value, next) => {
 
         console.log({ value });
@@ -121,7 +120,9 @@ describe('Mercy', () => {
 
     it('prevents creation of (single mercy object) flow', (done) => {
 
+        /* eslint-disable brace-style, hapi/hapi-scope-start */
         const throwable = () => { Mercy.flow(Mercy.flow()); };
+        /* eslint-disable brace-style, hapi/hapi-scope-start */
 
         expect(throwable).to.throw();
 
@@ -156,8 +157,8 @@ describe('Mercy', () => {
 
         const flow = Mercy.flow(internals.noop, internals.noop).final((data, next) => {
 
-            const task_0 = data['task_0'];
-            const task_1 = data['task_1'];
+            const task_0 = data.task_0;
+            const task_1 = data.task_1;
 
             return next(null, { task_0, task_1 });
         });
@@ -307,7 +308,9 @@ describe('Mercy', () => {
 
     it('_executes flow (single function) (single input)', (done) => {
 
+        /* eslint-disable brace-style, hapi/hapi-scope-start */
         const flow = Mercy.flow((input, next) => { return next(null, input); });
+        /* eslint-enable brace-style, hapi/hapi-scope-start */
 
         expect(flow.flow).to.not.exist();
         expect(flow._children).to.have.length(1);
@@ -478,7 +481,7 @@ describe('Mercy', () => {
             expect(err).to.not.exist();
             expect(meta).to.be.an.object();
             expect(data).to.be.an.object();
-            expect(result).to.be.equal([ undefined, undefined ]);
+            expect(result).to.be.equal([undefined, undefined]);
 
             done();
         });
@@ -886,7 +889,7 @@ describe('Mercy', () => {
         Mercy.execute(flow, (err, meta, data, result) => {
 
             expect(err).to.not.exist();
-            expect(result).to.equal(null)
+            expect(result).to.equal(null);
             expect(meta.bench.duration).to.be.within(256, 512);
             expect(meta.timer.duration).to.be.within(256, 512);
 
@@ -1403,7 +1406,7 @@ describe('Mercy', () => {
             Mercy.execute(flow, (err, meta, data, result) => {
 
                 expect(err).to.exist();
-                expect(err).to.be.an.error(`Client request error: Nock: Not allow net connect for "${info.host}:${info.port}/status"`)
+                expect(err).to.be.an.error(`Client request error: Nock: Not allow net connect for "${info.host}:${info.port}/status"`);
 
                 done();
             });
@@ -1431,7 +1434,7 @@ describe('Mercy', () => {
             Mercy.execute(flow, (err, meta, data, result) => {
 
                 expect(err).to.exist();
-                expect(err).to.be.an.error(`Client request error: Nock: Not allow net connect for "${info.host}:${info.port}/status"`)
+                expect(err).to.be.an.error(`Client request error: Nock: Not allow net connect for "${info.host}:${info.port}/status"`);
 
                 done();
             });
@@ -1469,7 +1472,7 @@ describe('Mercy', () => {
                 expect(record.rand).to.be.a.number();
                 expect(wild.rand).to.be.a.number();
                 expect(wild.rand).to.not.equal(record.rand);
-                expect(wild.results).to.equal([record.rand, wild.rand])
+                expect(wild.results).to.equal([record.rand, wild.rand]);
 
                 done();
             });
