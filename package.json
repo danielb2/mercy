@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "async": "2.x.x",
+    "chalk": "^2.4.0",
     "fs-extra": "5.x.x",
     "glue": "4.x.x",
     "hoek": "4.x.x",
