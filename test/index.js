@@ -748,24 +748,41 @@ describe('Mercy', () => {
 
     it('flow().final() can set _final', (done) => {
 
-        const task = (data, next) => { return next(); };
-        const flow = Mercy.flow().final(task);
+        const flow = Mercy.flow().final(internals.echo);
 
-        expect(flow._final).to.equal(task);
-        expect(flow._children).to.have.length(0);
+        Mercy.execute('foobar', flow, (err, meta, data, result) => {
 
-        done();
+            expect(err).to.not.exist();
+            expect(result).to.be.equal('foobar');
+
+            done();
+        });
     });
 
-    it('flow().final() doesn\'t overwrite task\'s', (done) => {
+    it('flow().final() reach when passed a `string`', (done) => {
 
-        const task = (data, next) => { return next(); };
-        const flow = Mercy.flow(internals.noop).final(task);
+        const flow = Mercy.flow({ echo: Mercy.input() }).final('echo.result');
 
-        expect(flow._final).to.equal(task);
-        expect(flow._children).to.have.length(1);
+        Mercy.execute('foobar', flow, (err, meta, data, result) => {
 
-        done();
+            expect(err).to.not.exist();
+            expect(result).to.equal('foobar');
+
+            done();
+        });
+    });
+
+    it('flow().final() transform when passed an `object`', (done) => {
+
+        const flow = Mercy.flow({ echo: Mercy.input() }).final({ 'bar': 'echo.result.foo' });
+
+        Mercy.execute({ foo: 'bar' }, flow, (err, meta, data, result) => {
+
+            expect(err).to.not.exist();
+            expect(result).to.equal({ bar: 'bar' });
+
+            done();
+        });
     });
 
     it('flow().wait()', (done) => {
