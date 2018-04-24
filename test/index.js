@@ -31,20 +31,20 @@ const internals = {
         console.log({ value });
         return next(null, value);
     },
-    peak: ({ dir, label }) => {
+    peak: (fixture) => {
 
         const peak = (last, next) => {
 
-            return next(null, { mocks: require(Path.resolve(`${dir}/${label}.json`)) });
+            return next(null, { mocks: require(fixture) });
         };
 
         return peak;
     },
-    clean: ({ dir, label }) => {
+    clean: (fixture) => {
 
         const clean = (last, next) => {
 
-            Fs.remove(Path.resolve(`${dir}/${label}.json`));
+            Fs.remove(Path.resolve(fixture));
             return next(null, last);
         };
 
@@ -1292,8 +1292,7 @@ describe('Mercy', () => {
 
     it('Mercy.mock() - local:false (default) does not record fixtures', (done) => {
 
-        const dir = `${__dirname}/fixtures`;
-        const label = `mock_${Crypto.randomBytes(4).readUInt32LE(0)}`;
+        const fixture = `${__dirname}/fixtures/mock_${Crypto.randomBytes(4).readUInt32LE(0)}.json`;
         const manifest = require('./cfg/basic');
 
         const prepare = Mercy.prepare(manifest, { preRegister: internals.preRegister });
@@ -1303,9 +1302,9 @@ describe('Mercy', () => {
             expect(err).to.not.exist();
 
             const wreck = Mercy.wreck().get(`${result.info.uri}/status`).defaults({ json: true });
-            const record = wreck.mock({ mode: 'record', local: false, dir, label });
-            const peak = internals.peak({ dir, label });
-            const clean = internals.clean({ dir, label });
+            const record = wreck.mock({ mode: 'record', local: false, fixture });
+            const peak = internals.peak(fixture);
+            const clean = internals.clean(fixture);
 
             const flow = Mercy.flow().waterfall().tasks({ record, peak, clean });
 
@@ -1322,8 +1321,7 @@ describe('Mercy', () => {
 
     it('Mercy.mock() - local:true records fixtures', (done) => {
 
-        const dir = `${__dirname}/fixtures`;
-        const label = `mock_${Crypto.randomBytes(4).readUInt32LE(0)}`;
+        const fixture = `${__dirname}/fixtures/mock_${Crypto.randomBytes(4).readUInt32LE(0)}.json`;
         const manifest = require('./cfg/basic');
 
         const prepare = Mercy.prepare(manifest, { preRegister: internals.preRegister });
@@ -1333,9 +1331,9 @@ describe('Mercy', () => {
             expect(err).to.not.exist();
 
             const wreck = Mercy.wreck().get(`${result.info.uri}/status`).defaults({ json: true });
-            const record = wreck.mock({ mode: 'record', local: true, dir, label });
-            const peak = internals.peak({ dir, label });
-            const clean = internals.clean({ dir, label });
+            const record = wreck.mock({ mode: 'record', local: true, fixture });
+            const peak = internals.peak(fixture);
+            const clean = internals.clean(fixture);
 
             const flow = Mercy.flow().waterfall().tasks({ record, peak, clean });
 
@@ -1352,8 +1350,7 @@ describe('Mercy', () => {
 
     it('Mercy.mock() - local:[ports] records fixtures', (done) => {
 
-        const dir = `${__dirname}/fixtures`;
-        const label = `mock_${Crypto.randomBytes(4).readUInt32LE(0)}`;
+        const fixture = `${__dirname}/fixtures/mock_${Crypto.randomBytes(4).readUInt32LE(0)}.json`;
         const manifest = require('./cfg/basic');
 
         const prepare = Mercy.prepare(manifest, { preRegister: internals.preRegister });
@@ -1363,9 +1360,9 @@ describe('Mercy', () => {
             expect(err).to.not.exist();
 
             const wreck = Mercy.wreck().get(`${result.info.uri}/status`).defaults({ json: true });
-            const record = wreck.mock({ mode: 'record', local: [result.info.port], dir, label });
-            const peak = internals.peak({ dir, label });
-            const clean = internals.clean({ dir, label });
+            const record = wreck.mock({ mode: 'record', local: [result.info.port], fixture });
+            const peak = internals.peak(fixture);
+            const clean = internals.clean(fixture);
 
             const flow = Mercy.flow().waterfall().tasks({ record, peak, clean });
 
@@ -1382,8 +1379,7 @@ describe('Mercy', () => {
 
     it('Mercy.mock() - local:false (default) does not lockdown', (done) => {
 
-        const dir = `${__dirname}/fixtures`;
-        const label = `mock_${Crypto.randomBytes(4).readUInt32LE(0)}`;
+        const fixture = `${__dirname}/fixtures/mock_${Crypto.randomBytes(4).readUInt32LE(0)}.json`;
         const manifest = require('./cfg/basic');
 
         const prepare = Mercy.prepare(manifest, { preRegister: internals.preRegister });
@@ -1393,7 +1389,7 @@ describe('Mercy', () => {
             expect(err).to.not.exist();
 
             const wreck = Mercy.wreck().get(`${result.info.uri}/status`).defaults({ json: true });
-            const lockdown = wreck.mock({ mode: 'lockdown', local: false, dir, label });
+            const lockdown = wreck.mock({ mode: 'lockdown', local: false, fixture });
 
             const flow = Mercy.flow().waterfall().tasks({ lockdown });
 
@@ -1409,8 +1405,7 @@ describe('Mercy', () => {
 
     it('Mercy.mock() - local:[ports] (default) specified ports are on lockdown', (done) => {
 
-        const dir = `${__dirname}/fixtures`;
-        const label = `mock_${Crypto.randomBytes(4).readUInt32LE(0)}`;
+        const fixture = `${__dirname}/fixtures/mock_${Crypto.randomBytes(4).readUInt32LE(0)}.json`;
         const manifest = require('./cfg/basic');
 
         const prepare = Mercy.prepare(manifest, { preRegister: internals.preRegister });
@@ -1421,7 +1416,7 @@ describe('Mercy', () => {
 
             const info = result.info;
             const wreck = Mercy.wreck().get(`${info.uri}/status`).defaults({ json: true });
-            const lockdown = wreck.mock({ mode: 'lockdown', local: [info.port], dir, label });
+            const lockdown = wreck.mock({ mode: 'lockdown', local: [info.port], fixture });
 
             const flow = Mercy.flow().waterfall().tasks({ lockdown });
 
@@ -1437,8 +1432,7 @@ describe('Mercy', () => {
 
     it('Mercy.mock() - local:true (default) all localhost connections are on lockdown', (done) => {
 
-        const dir = `${__dirname}/fixtures`;
-        const label = `mock_${Crypto.randomBytes(4).readUInt32LE(0)}`;
+        const fixture = `${__dirname}/fixtures/mock_${Crypto.randomBytes(4).readUInt32LE(0)}.json`;
         const manifest = require('./cfg/basic');
 
         const prepare = Mercy.prepare(manifest, { preRegister: internals.preRegister });
@@ -1449,7 +1443,7 @@ describe('Mercy', () => {
 
             const info = result.info;
             const wreck = Mercy.wreck().get(`${info.uri}/status`).defaults({ json: true });
-            const lockdown = wreck.mock({ mode: 'lockdown', local: true, dir, label });
+            const lockdown = wreck.mock({ mode: 'lockdown', local: true, fixture });
 
             const flow = Mercy.flow().waterfall().tasks({ lockdown });
 
@@ -1465,8 +1459,7 @@ describe('Mercy', () => {
 
     it('Mercy.mock() - record local:true & test wild', (done) => {
 
-        const dir = `${__dirname}/fixtures`;
-        const label = `mock_${Crypto.randomBytes(4).readUInt32LE(0)}`;
+        const fixture = `${__dirname}/fixtures/mock_${Crypto.randomBytes(4).readUInt32LE(0)}.json`;
         const manifest = require('./cfg/basic');
 
         const prepare = Mercy.prepare(manifest, { preRegister: internals.preRegister });
@@ -1476,10 +1469,10 @@ describe('Mercy', () => {
             expect(err).to.not.exist();
 
             const wreck = Mercy.wreck().get(`${result.info.uri}/rand`).defaults({ json: true });
-            const record = wreck.mock({ mode: 'record', local: true, dir, label });
-            const wild = wreck.mock({ mode: 'wild', dir, label });
-            const peak = internals.peak({ dir, label });
-            const clean = internals.clean({ dir, label });
+            const record = wreck.mock({ mode: 'record', local: true, fixture });
+            const wild = wreck.mock({ mode: 'wild', fixture });
+            const peak = internals.peak(fixture);
+            const clean = internals.clean(fixture);
 
             const flow = Mercy.flow().waterfall().tasks({ record, wild, peak, clean });
 
@@ -1503,8 +1496,7 @@ describe('Mercy', () => {
 
     it('Mercy.mock() - record local:true & test lockdown', (done) => {
 
-        const dir = `${__dirname}/fixtures`;
-        const label = `mock_${Crypto.randomBytes(4).readUInt32LE(0)}`;
+        const fixture = `${__dirname}/fixtures/mock_${Crypto.randomBytes(4).readUInt32LE(0)}.json`;
         const manifest = require('./cfg/basic');
 
         const prepare = Mercy.prepare(manifest, { preRegister: internals.preRegister });
@@ -1514,10 +1506,10 @@ describe('Mercy', () => {
             expect(err).to.not.exist();
 
             const wreck = Mercy.wreck().get(`${result.info.uri}/rand`).defaults({ json: true });
-            const record = wreck.mock({ mode: 'record', local: true, dir, label });
-            const lockdown = wreck.mock({ mode: 'lockdown', dir, label });
-            const peak = internals.peak({ dir, label });
-            const clean = internals.clean({ dir, label });
+            const record = wreck.mock({ mode: 'record', local: true, fixture });
+            const lockdown = wreck.mock({ mode: 'lockdown', fixture });
+            const peak = internals.peak(fixture);
+            const clean = internals.clean(fixture);
 
             const flow = Mercy.flow().waterfall().tasks({ record, lockdown, peak, clean });
 
