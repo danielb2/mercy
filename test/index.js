@@ -1279,7 +1279,12 @@ describe('Mercy', () => {
         Mercy.execute(flow, (err, meta, data, result) => {
 
             expect(err).to.not.exist();
-            expect(result).to.equal({ status: 'ok', results: ['ok'] });
+
+            const keys = Object.keys(result);
+            const values = ['statusCode', 'headers', 'payload', 'rawPayload', 'raw', 'req', 'res', 'result', 'request'];
+
+            expect(keys).to.part.contain(values);
+            expect(result.result).to.equal({ status: 'ok', results: ['ok'] });
 
             done();
         });
