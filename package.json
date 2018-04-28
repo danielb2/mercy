@@ -37,8 +37,8 @@
     "wreck": "12.x.x"
   },
   "devDependencies": {
-    "blipp": "2.x.x",
-    "code": "3.x.x",
+    "blipp": "3.x.x",
+    "code": "4.x.x",
     "good-console": "6.x.x",
     "good-file": "6.x.x",
     "good-squeeze": "5.x.x",
