@@ -52,6 +52,12 @@ const internals = {
     },
     preRegister: (server, next) => {
 
+        server.state('session', {
+            ttl: 24 * 60 * 60 * 1000,
+            path: '/',
+            encoding: 'base64json'
+        });
+
         const results = [];
         const rand = (request, reply) => {
 
@@ -67,9 +73,16 @@ const internals = {
             return reply({ status, results });
         };
 
+        const cookie = (request, reply) => {
+
+            const cookie = request.headers.cookie;
+            return reply({ cookie }).state('session', { foo: 'bar' });
+        };
+
         server.route([
             { method: 'GET', path: '/rand', handler: rand },
-            { method: 'GET', path: '/status', handler: status }
+            { method: 'GET', path: '/status', handler: status },
+            { method: 'GET', path: '/cookie', handler: cookie }
         ]);
 
         return next();
@@ -1285,6 +1298,28 @@ describe('Mercy', () => {
 
             expect(keys).to.part.contain(values);
             expect(result.result).to.equal({ status: 'ok', results: ['ok'] });
+
+            done();
+        });
+    });
+
+    it('Mercy.inject() automatically extracts set-cookies from previous requests', (done) => {
+
+        const manifest = require('./cfg/basic');
+        const options = { preRegister: internals.preRegister };
+
+        const flow = Mercy.flow().tasks({
+            preapre: Mercy.prepare(manifest, options),
+            inject1: ['preapre', Mercy.inject('/cookie')],
+            inject2: ['preapre', 'inject1', Mercy.inject('/cookie')]
+        }).final('inject2');
+
+        Mercy.execute(flow, (err, meta, data, result) => {
+
+            expect(err).to.not.exist();
+
+            const res = result;
+            expect(res.result.cookie).to.be.a.string();
 
             done();
         });
