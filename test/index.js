@@ -278,18 +278,16 @@ describe('Mercy', () => {
         expect(flow.flow).to.not.exist();
         expect(flow._children).to.have.length(0);
 
-        flow._execute((err, { meta, data, result }) => {
+        flow._execute((err, { data, result }) => {
 
             expect(err).to.not.exist();
-            expect(meta).to.be.an.object();
             expect(data).to.be.an.object();
             expect(result).to.be.undefined();
 
-            expect(meta).to.be.an.object();
-            expect(meta.bench).to.be.an.object();
-            expect(meta.timer).to.be.an.object();
-            expect(meta.bench).to.include(['start', 'end', 'duration']);
-            expect(meta.timer).to.include(['start', 'end', 'duration']);
+            expect(data._meta.bench).to.be.an.object();
+            expect(data._meta.timer).to.be.an.object();
+            expect(data._meta.bench).to.include(['start', 'end', 'duration']);
+            expect(data._meta.timer).to.include(['start', 'end', 'duration']);
 
             done();
         });
@@ -302,18 +300,16 @@ describe('Mercy', () => {
         expect(flow.flow).to.not.exist();
         expect(flow._children).to.have.length(1);
 
-        flow._execute((err, { meta, data, result }) => {
+        flow._execute((err, { data, result }) => {
 
             expect(err).to.not.exist();
-            expect(meta).to.be.an.object();
             expect(data).to.be.an.object();
             expect(result).to.be.undefined();
 
-            expect(meta).to.be.an.object();
-            expect(meta.bench).to.be.an.object();
-            expect(meta.timer).to.be.an.object();
-            expect(meta.bench).to.include(['start', 'end', 'duration']);
-            expect(meta.timer).to.include(['start', 'end', 'duration']);
+            expect(data._meta.bench).to.be.an.object();
+            expect(data._meta.timer).to.be.an.object();
+            expect(data._meta.bench).to.include(['start', 'end', 'duration']);
+            expect(data._meta.timer).to.include(['start', 'end', 'duration']);
 
             done();
         });
@@ -328,11 +324,10 @@ describe('Mercy', () => {
         expect(flow.flow).to.not.exist();
         expect(flow._children).to.have.length(1);
 
-        flow._execute('foobar', (err, { meta, data, result }) => {
+        flow._execute('foobar', (err, { data, result }) => {
 
 
             expect(err).to.not.exist();
-            expect(meta).to.be.an.object();
             expect(data).to.be.an.object();
             expect(result).to.be.equal('foobar');
 
@@ -350,18 +345,16 @@ describe('Mercy', () => {
         expect(flow.flow).to.not.exist();
         expect(flow._children).to.have.length(1);
 
-        flow._execute((err, { meta, data, result }) => {
+        flow._execute((err, { data, result }) => {
 
             expect(err).to.not.exist();
-            expect(meta).to.be.an.object();
             expect(data).to.be.an.object();
             expect(result).to.equal('foobar');
 
-            expect(meta).to.be.an.object();
-            expect(meta.bench).to.be.an.object();
-            expect(meta.timer).to.be.an.object();
-            expect(meta.bench).to.include(['start', 'end', 'duration']);
-            expect(meta.timer).to.include(['start', 'end', 'duration']);
+            expect(data._meta.bench).to.be.an.object();
+            expect(data._meta.timer).to.be.an.object();
+            expect(data._meta.bench).to.include(['start', 'end', 'duration']);
+            expect(data._meta.timer).to.include(['start', 'end', 'duration']);
 
             done();
         });
@@ -377,18 +370,16 @@ describe('Mercy', () => {
         expect(flow.flow).to.not.exist();
         expect(flow._children).to.have.length(1);
 
-        flow._execute((err, { meta, data, result }) => {
+        flow._execute((err, { data, result }) => {
 
             expect(err).to.not.exist();
-            expect(meta).to.be.an.object();
             expect(data).to.be.an.object();
             expect(result).to.equal('foobar');
 
-            expect(meta).to.be.an.object();
-            expect(meta.bench).to.be.an.object();
-            expect(meta.timer).to.be.an.object();
-            expect(meta.bench).to.include(['start', 'end', 'duration']);
-            expect(meta.timer).to.include(['start', 'end', 'duration']);
+            expect(data._meta.bench).to.be.an.object();
+            expect(data._meta.timer).to.be.an.object();
+            expect(data._meta.bench).to.include(['start', 'end', 'duration']);
+            expect(data._meta.timer).to.include(['start', 'end', 'duration']);
 
             done();
         });
@@ -398,10 +389,9 @@ describe('Mercy', () => {
 
         const flow = Mercy.flow();
 
-        Mercy.execute(flow, (err, meta, data, result) => {
+        Mercy.execute(flow, (err, data, result) => {
 
             expect(err).to.not.exist();
-            expect(meta).to.be.an.object();
             expect(data).to.be.an.object();
             expect(result).to.be.undefined();
 
@@ -413,10 +403,9 @@ describe('Mercy', () => {
 
         const flow = Mercy.flow(internals.noop);
 
-        Mercy.execute(flow, (err, meta, data, result) => {
+        Mercy.execute(flow, (err, data, result) => {
 
             expect(err).to.not.exist();
-            expect(meta).to.be.an.object();
             expect(data).to.be.an.object();
             expect(result).to.be.undefined();
 
@@ -431,10 +420,9 @@ describe('Mercy', () => {
             return next(null, 'foobar');
         });
 
-        Mercy.execute(flow, (err, meta, data, result) => {
+        Mercy.execute(flow, (err, data, result) => {
 
             expect(err).to.not.exist();
-            expect(meta).to.be.an.object();
             expect(data).to.be.an.object();
             expect(result).to.be.equal('foobar');
 
@@ -446,10 +434,9 @@ describe('Mercy', () => {
 
         const flow = Mercy.flow({ foo: internals.noop, bar: internals.noop });
 
-        Mercy.execute(flow, (err, meta, data, result) => {
+        Mercy.execute(flow, (err, data, result) => {
 
             expect(err).to.not.exist();
-            expect(meta).to.be.an.object();
             expect(data).to.be.an.object();
             expect(result).to.be.null();
 
@@ -467,10 +454,9 @@ describe('Mercy', () => {
             return next(null, data.foo.result);
         });
 
-        Mercy.execute(flow, (err, meta, data, result) => {
+        Mercy.execute(flow, (err, data, result) => {
 
             expect(err).to.not.exist();
-            expect(meta).to.be.an.object();
             expect(data).to.be.an.object();
             expect(result).to.be.undefined();
 
@@ -489,10 +475,9 @@ describe('Mercy', () => {
             return next(null, data.foobar.result);
         });
 
-        Mercy.execute(flow, (err, meta, data, result) => {
+        Mercy.execute(flow, (err, data, result) => {
 
             expect(err).to.not.exist();
-            expect(meta).to.be.an.object();
             expect(data).to.be.an.object();
             expect(result).to.be.equal([undefined, undefined]);
 
@@ -502,10 +487,9 @@ describe('Mercy', () => {
 
     it('Mercy.execute() automatically converts to flow', (done) => {
 
-        Mercy.execute(internals.noop, (err, meta, data, result) => {
+        Mercy.execute(internals.noop, (err, data, result) => {
 
             expect(err).to.not.exist();
-            expect(meta).to.be.an.object();
             expect(data).to.be.an.object();
             expect(result).to.be.undefined();
 
@@ -520,10 +504,9 @@ describe('Mercy', () => {
             bar: ['foo', Mercy.flow({ one: internals.noop })]
         });
 
-        Mercy.execute(flow, (err, meta, data, result) => {
+        Mercy.execute(flow, (err, data, result) => {
 
             expect(err).to.not.exist();
-            expect(meta).to.be.an.object();
             expect(data).to.be.an.object();
             expect(result).to.be.null();
 
@@ -546,10 +529,9 @@ describe('Mercy', () => {
             return next(null, data.bar.result);
         });
 
-        Mercy.execute(flow, (err, meta, data, result) => {
+        Mercy.execute(flow, (err, data, result) => {
 
             expect(err).to.not.exist();
-            expect(meta).to.be.an.object();
             expect(data).to.be.an.object();
             expect(result).to.equal('foobar');
 
@@ -561,10 +543,9 @@ describe('Mercy', () => {
 
         const flow = internals.echo;
 
-        Mercy.execute('foobar', flow, (err, meta, data, result) => {
+        Mercy.execute('foobar', flow, (err, data, result) => {
 
             expect(err).to.not.exist();
-            expect(meta).to.be.an.object();
             expect(data).to.be.an.object();
             expect(result).to.equal('foobar');
 
@@ -576,10 +557,9 @@ describe('Mercy', () => {
 
         const flow = (foo, bar, next) => { return next(null, [foo, bar]); };
 
-        Mercy.execute('foo', 'bar', flow, (err, meta, data, result) => {
+        Mercy.execute('foo', 'bar', flow, (err, data, result) => {
 
             expect(err).to.not.exist();
-            expect(meta).to.be.an.object();
             expect(data).to.be.an.object();
 
             expect(result).to.equal(['foo', 'bar']);
@@ -598,10 +578,9 @@ describe('Mercy', () => {
             return next(null, data.bar.result);
         });
 
-        Mercy.execute('foobar', flow, (err, meta, data, result) => {
+        Mercy.execute('foobar', flow, (err, data, result) => {
 
             expect(err).to.not.exist();
-            expect(meta).to.be.an.object();
             expect(data).to.be.an.object();
             expect(result).to.equal('foobar');
 
@@ -616,10 +595,9 @@ describe('Mercy', () => {
             (input, next) => { return next(null, input); }
         ]);
 
-        Mercy.execute('foobar', flow, (err, meta, data, result) => {
+        Mercy.execute('foobar', flow, (err, data, result) => {
 
             expect(err).to.not.exist();
-            expect(meta).to.be.an.object();
             expect(data).to.be.an.object();
             expect(result).to.equal('foobar');
 
@@ -631,10 +609,9 @@ describe('Mercy', () => {
 
         const flow = Mercy.input();
 
-        Mercy.execute('foobar', flow, (err, meta, data, result) => {
+        Mercy.execute('foobar', flow, (err, data, result) => {
 
             expect(err).to.not.exist();
-            expect(meta).to.be.an.object();
             expect(data).to.be.an.object();
 
             expect(result).to.equal('foobar');
@@ -648,10 +625,9 @@ describe('Mercy', () => {
         const schema = Joi.string();
         const flow = Mercy.input().validate(schema);
 
-        Mercy.execute('foobar', flow, (err, meta, data, result) => {
+        Mercy.execute('foobar', flow, (err, data, result) => {
 
             expect(err).to.not.exist();
-            expect(meta).to.be.an.object();
             expect(data).to.be.an.object();
 
             expect(result).to.equal('foobar');
@@ -665,10 +641,9 @@ describe('Mercy', () => {
         const schema = Joi.array().items(Joi.string());
         const flow = Mercy.input().validate(schema);
 
-        Mercy.execute('foobar', 'foobar', flow, (err, meta, data, result) => {
+        Mercy.execute('foobar', 'foobar', flow, (err, data, result) => {
 
             expect(err).to.not.exist();
-            expect(meta).to.be.an.object();
             expect(data).to.be.an.object();
 
             expect(result).to.equal(['foobar', 'foobar']);
@@ -681,10 +656,9 @@ describe('Mercy', () => {
 
         const flow = Mercy.flow([Mercy.input()]);
 
-        Mercy.execute('foobar', flow, (err, meta, data, result) => {
+        Mercy.execute('foobar', flow, (err, data, result) => {
 
             expect(err).to.not.exist();
-            expect(meta).to.be.an.object();
             expect(data).to.be.an.object();
             expect(result).to.equal('foobar');
 
@@ -699,10 +673,9 @@ describe('Mercy', () => {
             return next(null, data.in.result);
         });
 
-        Mercy.execute('foobar', flow, (err, meta, data, result) => {
+        Mercy.execute('foobar', flow, (err, data, result) => {
 
             expect(err).to.not.exist();
-            expect(meta).to.be.an.object();
             expect(data).to.be.an.object();
             expect(result).to.equal('foobar');
 
@@ -720,10 +693,9 @@ describe('Mercy', () => {
             return next(null, data.foo.result);
         });
 
-        Mercy.execute('foobar', flow, (err, meta, data, result) => {
+        Mercy.execute('foobar', flow, (err, data, result) => {
 
             expect(err).to.not.exist();
-            expect(meta).to.be.an.object();
             expect(data).to.be.an.object();
             expect(result).to.equal('foobar');
 
@@ -748,10 +720,9 @@ describe('Mercy', () => {
             return next(null, data.foo.result);
         });
 
-        Mercy.execute('foobar', flow, (err, meta, data, result) => {
+        Mercy.execute('foobar', flow, (err, data, result) => {
 
             expect(err).to.not.exist();
-            expect(meta).to.be.an.object();
             expect(data).to.be.an.object();
             expect(result).to.equal('foobar');
 
@@ -763,7 +734,7 @@ describe('Mercy', () => {
 
         const flow = Mercy.flow().final(internals.echo);
 
-        Mercy.execute('foobar', flow, (err, meta, data, result) => {
+        Mercy.execute('foobar', flow, (err, data, result) => {
 
             expect(err).to.not.exist();
             expect(result).to.be.equal('foobar');
@@ -776,7 +747,7 @@ describe('Mercy', () => {
 
         const flow = Mercy.flow({ echo: Mercy.input() }).final('echo.result');
 
-        Mercy.execute('foobar', flow, (err, meta, data, result) => {
+        Mercy.execute('foobar', flow, (err, data, result) => {
 
             expect(err).to.not.exist();
             expect(result).to.equal('foobar');
@@ -789,7 +760,7 @@ describe('Mercy', () => {
 
         const flow = Mercy.flow({ echo: Mercy.input() }).final({ 'bar': 'echo.result.foo' });
 
-        Mercy.execute({ foo: 'bar' }, flow, (err, meta, data, result) => {
+        Mercy.execute({ foo: 'bar' }, flow, (err, data, result) => {
 
             expect(err).to.not.exist();
             expect(result).to.equal({ bar: 'bar' });
@@ -802,12 +773,12 @@ describe('Mercy', () => {
 
         const flow = Mercy.flow().wait(256);
 
-        Mercy.execute(flow, (err, meta, data, result) => {
+        Mercy.execute(flow, (err, data, result) => {
 
             expect(err).to.not.exist();
             expect(result).to.be.undefined();
-            expect(meta.bench.duration).to.be.at.least(256);
-            expect(meta.timer.duration).to.be.at.least(256);
+            expect(data._meta.bench.duration).to.be.at.least(256);
+            expect(data._meta.timer.duration).to.be.at.least(256);
 
             done();
         });
@@ -817,12 +788,12 @@ describe('Mercy', () => {
 
         const flow = Mercy.wait(256);
 
-        Mercy.execute(flow, (err, meta, data, result) => {
+        Mercy.execute(flow, (err, data, result) => {
 
             expect(err).to.not.exist();
             expect(result).to.be.equal(256);
-            expect(meta.bench.duration).to.be.at.least(256);
-            expect(meta.timer.duration).to.be.at.least(256);
+            expect(data._meta.bench.duration).to.be.at.least(256);
+            expect(data._meta.timer.duration).to.be.at.least(256);
 
             done();
         });
@@ -832,7 +803,7 @@ describe('Mercy', () => {
 
         const flow = Mercy.flow(Mercy.wait(256), Mercy.wait(256)).timeout(1);
 
-        Mercy.execute(flow, (err, meta, data, result) => {
+        Mercy.execute(flow, (err, data, result) => {
 
             expect(err).to.exist();
             expect(result).to.be.an.error();
@@ -852,7 +823,7 @@ describe('Mercy', () => {
             ])
         ]);
 
-        Mercy.execute(flow, (err, meta, data, result) => {
+        Mercy.execute(flow, (err, data, result) => {
 
             expect(err).to.exist();
             expect(result).to.be.an.error(Error, 'Flow timeout of 1000(ms) occurred');
@@ -865,7 +836,7 @@ describe('Mercy', () => {
 
         const flow = Mercy.flow(Mercy.wait(256), Mercy.wait(256)).timeout(1).optional();
 
-        Mercy.execute(flow, (err, meta, data, result) => {
+        Mercy.execute(flow, (err, data, result) => {
 
             expect(err).to.not.exist();
             expect(result).to.equal(256);
@@ -880,14 +851,14 @@ describe('Mercy', () => {
 
         expect(flow._style).to.equal('series');
 
-        Mercy.execute(flow, (err, meta, data, result) => {
+        Mercy.execute(flow, (err, data, result) => {
 
             expect(err).to.not.exist();
             expect(result).to.be.null();
             expect(data.task_0.result).to.equal(256);
             expect(data.task_1.result).to.equal(256);
-            expect(meta.bench.duration).to.be.at.least(512);
-            expect(meta.timer.duration).to.be.at.least(512);
+            expect(data._meta.bench.duration).to.be.at.least(512);
+            expect(data._meta.timer.duration).to.be.at.least(512);
 
             done();
         });
@@ -899,12 +870,12 @@ describe('Mercy', () => {
 
         expect(flow._style).to.equal('waterfall');
 
-        Mercy.execute(flow, (err, meta, data, result) => {
+        Mercy.execute(flow, (err, data, result) => {
 
             expect(err).to.not.exist();
             expect(result).to.equal(256);
-            expect(meta.bench.duration).to.be.at.least(512);
-            expect(meta.timer.duration).to.be.at.least(512);
+            expect(data._meta.bench.duration).to.be.at.least(512);
+            expect(data._meta.timer.duration).to.be.at.least(512);
 
             done();
         });
@@ -916,12 +887,12 @@ describe('Mercy', () => {
 
         expect(flow._style).to.equal('parallel');
 
-        Mercy.execute(flow, (err, meta, data, result) => {
+        Mercy.execute(flow, (err, data, result) => {
 
             expect(err).to.not.exist();
             expect(result).to.equal(null);
-            expect(meta.bench.duration).to.be.within(256, 512);
-            expect(meta.timer.duration).to.be.within(256, 512);
+            expect(data._meta.bench.duration).to.be.within(256, 512);
+            expect(data._meta.timer.duration).to.be.within(256, 512);
 
             done();
         });
@@ -937,7 +908,7 @@ describe('Mercy', () => {
             return next(new Error(`Count: ${++count}`));
         }).retry(opts);
 
-        Mercy.execute(flow, (err, meta, data, result) => {
+        Mercy.execute(flow, (err, data, result) => {
 
             expect(err).to.exist();
             expect(count).to.equal(opts.times);
@@ -952,7 +923,7 @@ describe('Mercy', () => {
 
         const flow = Mercy.flow().tasks(internals.noop);
 
-        Mercy.execute(flow, (err, meta, data, result) => {
+        Mercy.execute(flow, (err, data, result) => {
 
             expect(err).to.not.exist();
             expect(flow._children).to.have.length(1);
@@ -1111,7 +1082,7 @@ describe('Mercy', () => {
         const manifest = require('./cfg/basic');
         const flow = Mercy.compose(manifest);
 
-        Mercy.execute(flow, (err, meta, data, result) => {
+        Mercy.execute(flow, (err, data, result) => {
 
             expect(err).to.not.exist();
             expect(result.info.created).to.be.above(0);
@@ -1129,7 +1100,7 @@ describe('Mercy', () => {
             Mercy.start()
         ]);
 
-        Mercy.execute(flow, (err, meta, data, result) => {
+        Mercy.execute(flow, (err, data, result) => {
 
             expect(err).to.not.exist();
             expect(result.info.created).to.be.above(0);
@@ -1152,7 +1123,7 @@ describe('Mercy', () => {
             Mercy.stop()
         ]);
 
-        Mercy.execute(flow, (err, meta, data, result) => {
+        Mercy.execute(flow, (err, data, result) => {
 
             expect(err).to.not.exist();
             expect(result.info.created).to.be.above(0);
@@ -1167,7 +1138,7 @@ describe('Mercy', () => {
         const manifest = require('./cfg/basic');
         const flow = Mercy.prepare(manifest);
 
-        Mercy.execute(flow, (err, meta, data, result) => {
+        Mercy.execute(flow, (err, data, result) => {
 
             expect(err).to.not.exist();
             expect(result.info.created).to.be.above(0);
@@ -1182,7 +1153,7 @@ describe('Mercy', () => {
         const schema = Joi.number();
         const flow = Mercy.validate(schema);
 
-        Mercy.execute(32, flow, (err, meta, data, result) => {
+        Mercy.execute(32, flow, (err, data, result) => {
 
             expect(err).to.not.exist();
             expect(result).to.equal(32);
@@ -1196,7 +1167,7 @@ describe('Mercy', () => {
         const schema = Joi.number();
         const flow = Mercy.input(schema);
 
-        Mercy.execute(32, flow, (err, meta, data, result) => {
+        Mercy.execute(32, flow, (err, data, result) => {
 
             expect(err).to.not.exist();
             expect(result).to.equal(32);
@@ -1225,7 +1196,7 @@ describe('Mercy', () => {
 
         const flow = Mercy.transform(template);
 
-        Mercy.execute(source, flow, (err, meta, data, result) => {
+        Mercy.execute(source, flow, (err, data, result) => {
 
             expect(err).to.not.exist();
             expect(result).to.equal({
@@ -1248,7 +1219,7 @@ describe('Mercy', () => {
         const flow = Mercy.reach('test.ing');
         const input = { test: { ing: 'foobar' } };
 
-        Mercy.execute(input, flow, (err, meta, data, result) => {
+        Mercy.execute(input, flow, (err, data, result) => {
 
             expect(err).to.not.exist();
             expect(result).to.equal('foobar');
@@ -1268,7 +1239,7 @@ describe('Mercy', () => {
 
         const flow = Mercy.flow().tasks(prepare, transform, wreck);
 
-        Mercy.execute(flow, (err, meta, data, result) => {
+        Mercy.execute(flow, (err, data, result) => {
 
             expect(err).to.not.exist();
             expect(result).to.be.an.object();
@@ -1289,7 +1260,7 @@ describe('Mercy', () => {
 
         const flow = Mercy.flow().tasks(prepare, inject);
 
-        Mercy.execute(flow, (err, meta, data, result) => {
+        Mercy.execute(flow, (err, data, result) => {
 
             expect(err).to.not.exist();
 
@@ -1314,7 +1285,7 @@ describe('Mercy', () => {
             inject2: ['preapre', 'inject1', Mercy.inject('/cookie')]
         }).final('inject2');
 
-        Mercy.execute(flow, (err, meta, data, result) => {
+        Mercy.execute(flow, (err, data, result) => {
 
             expect(err).to.not.exist();
 
@@ -1332,7 +1303,7 @@ describe('Mercy', () => {
 
         const prepare = Mercy.prepare(manifest, { preRegister: internals.preRegister });
 
-        Mercy.execute(prepare, (err, meta, data, result) => {
+        Mercy.execute(prepare, (err, data, result) => {
 
             expect(err).to.not.exist();
 
@@ -1343,7 +1314,7 @@ describe('Mercy', () => {
 
             const flow = Mercy.flow().waterfall().tasks({ record, peak, clean });
 
-            Mercy.execute(flow, (err, meta, data, result) => {
+            Mercy.execute(flow, (err, data, result) => {
 
                 expect(err).to.not.exist();
                 expect(data.peak.result.mocks).to.have.length(0);
@@ -1361,7 +1332,7 @@ describe('Mercy', () => {
 
         const prepare = Mercy.prepare(manifest, { preRegister: internals.preRegister });
 
-        Mercy.execute(prepare, (err, meta, data, result) => {
+        Mercy.execute(prepare, (err, data, result) => {
 
             expect(err).to.not.exist();
 
@@ -1372,7 +1343,7 @@ describe('Mercy', () => {
 
             const flow = Mercy.flow().waterfall().tasks({ record, peak, clean });
 
-            Mercy.execute(flow, (err, meta, data, result) => {
+            Mercy.execute(flow, (err, data, result) => {
 
                 expect(err).to.not.exist();
                 expect(data.peak.result.mocks).to.have.length(1);
@@ -1390,7 +1361,7 @@ describe('Mercy', () => {
 
         const prepare = Mercy.prepare(manifest, { preRegister: internals.preRegister });
 
-        Mercy.execute(prepare, (err, meta, data, result) => {
+        Mercy.execute(prepare, (err, data, result) => {
 
             expect(err).to.not.exist();
 
@@ -1401,7 +1372,7 @@ describe('Mercy', () => {
 
             const flow = Mercy.flow().waterfall().tasks({ record, peak, clean });
 
-            Mercy.execute(flow, (err, meta, data, result) => {
+            Mercy.execute(flow, (err, data, result) => {
 
                 expect(err).to.not.exist();
                 expect(data.peak.result.mocks).to.have.length(1);
@@ -1419,7 +1390,7 @@ describe('Mercy', () => {
 
         const prepare = Mercy.prepare(manifest, { preRegister: internals.preRegister });
 
-        Mercy.execute(prepare, (err, meta, data, result) => {
+        Mercy.execute(prepare, (err, data, result) => {
 
             expect(err).to.not.exist();
 
@@ -1428,7 +1399,7 @@ describe('Mercy', () => {
 
             const flow = Mercy.flow().waterfall().tasks({ lockdown });
 
-            Mercy.execute(flow, (err, meta, data, result) => {
+            Mercy.execute(flow, (err, data, result) => {
 
                 expect(err).to.not.exist();
                 expect(data.lockdown.result.payload).to.equal({ status: 'ok', results: ['ok'] });
@@ -1445,7 +1416,7 @@ describe('Mercy', () => {
 
         const prepare = Mercy.prepare(manifest, { preRegister: internals.preRegister });
 
-        Mercy.execute(prepare, (err, meta, data, result) => {
+        Mercy.execute(prepare, (err, data, result) => {
 
             expect(err).to.not.exist();
 
@@ -1455,7 +1426,7 @@ describe('Mercy', () => {
 
             const flow = Mercy.flow().waterfall().tasks({ lockdown });
 
-            Mercy.execute(flow, (err, meta, data, result) => {
+            Mercy.execute(flow, (err, data, result) => {
 
                 expect(err).to.exist();
                 expect(err).to.be.an.error(`Client request error: Nock: Not allow net connect for "${info.host}:${info.port}/status"`);
@@ -1472,7 +1443,7 @@ describe('Mercy', () => {
 
         const prepare = Mercy.prepare(manifest, { preRegister: internals.preRegister });
 
-        Mercy.execute(prepare, (err, meta, data, result) => {
+        Mercy.execute(prepare, (err, data, result) => {
 
             expect(err).to.not.exist();
 
@@ -1482,7 +1453,7 @@ describe('Mercy', () => {
 
             const flow = Mercy.flow().waterfall().tasks({ lockdown });
 
-            Mercy.execute(flow, (err, meta, data, result) => {
+            Mercy.execute(flow, (err, data, result) => {
 
                 expect(err).to.exist();
                 expect(err).to.be.an.error(`Client request error: Nock: Not allow net connect for "${info.host}:${info.port}/status"`);
@@ -1499,7 +1470,7 @@ describe('Mercy', () => {
 
         const prepare = Mercy.prepare(manifest, { preRegister: internals.preRegister });
 
-        Mercy.execute(prepare, (err, meta, data, result) => {
+        Mercy.execute(prepare, (err, data, result) => {
 
             expect(err).to.not.exist();
 
@@ -1511,7 +1482,7 @@ describe('Mercy', () => {
 
             const flow = Mercy.flow().waterfall().tasks({ record, wild, peak, clean });
 
-            Mercy.execute(flow, (err, meta, data, result) => {
+            Mercy.execute(flow, (err, data, result) => {
 
                 expect(err).to.not.exist();
                 expect(data.peak.result.mocks).to.have.length(1);
@@ -1536,7 +1507,7 @@ describe('Mercy', () => {
 
         const prepare = Mercy.prepare(manifest, { preRegister: internals.preRegister });
 
-        Mercy.execute(prepare, (err, meta, data, result) => {
+        Mercy.execute(prepare, (err, data, result) => {
 
             expect(err).to.not.exist();
 
@@ -1548,7 +1519,7 @@ describe('Mercy', () => {
 
             const flow = Mercy.flow().waterfall().tasks({ record, lockdown, peak, clean });
 
-            Mercy.execute(flow, (err, meta, data, result) => {
+            Mercy.execute(flow, (err, data, result) => {
 
                 expect(err).to.not.exist();
                 expect(data.peak.result.mocks).to.have.length(1);
