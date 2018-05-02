@@ -271,14 +271,14 @@ describe('Mercy', () => {
         done();
     });
 
-    it('_executes flow (empty) ', (done) => {
+    it('flow.execute() (empty) ', (done) => {
 
         const flow = Mercy.flow();
 
         expect(flow.flow).to.not.exist();
         expect(flow._children).to.have.length(0);
 
-        flow._execute((err, { data, result }) => {
+        flow.execute((err, { data, result }) => {
 
             expect(err).to.not.exist();
             expect(data).to.be.an.object();
@@ -293,14 +293,14 @@ describe('Mercy', () => {
         });
     });
 
-    it('_executes flow (single function)', (done) => {
+    it('flow.execute() (single function)', (done) => {
 
         const flow = Mercy.flow(internals.noop);
 
         expect(flow.flow).to.not.exist();
         expect(flow._children).to.have.length(1);
 
-        flow._execute((err, { data, result }) => {
+        flow.execute((err, { data, result }) => {
 
             expect(err).to.not.exist();
             expect(data).to.be.an.object();
@@ -315,7 +315,7 @@ describe('Mercy', () => {
         });
     });
 
-    it('_executes flow (single function) (single input)', (done) => {
+    it('flow.execute() (single function) (single input)', (done) => {
 
         /* eslint-disable brace-style, hapi/hapi-scope-start */
         const flow = Mercy.flow((input, next) => { return next(null, input); });
@@ -324,7 +324,7 @@ describe('Mercy', () => {
         expect(flow.flow).to.not.exist();
         expect(flow._children).to.have.length(1);
 
-        flow._execute('foobar', (err, { data, result }) => {
+        flow.execute('foobar', (err, { data, result }) => {
 
 
             expect(err).to.not.exist();
@@ -335,7 +335,7 @@ describe('Mercy', () => {
         });
     });
 
-    it('_executes (single input) (single function) flow w/ final', (done) => {
+    it('flow.execute() (single input) (single function) w/ final', (done) => {
 
         const flow = Mercy.flow(internals.noop).final((data, next) => {
 
@@ -345,7 +345,7 @@ describe('Mercy', () => {
         expect(flow.flow).to.not.exist();
         expect(flow._children).to.have.length(1);
 
-        flow._execute((err, { data, result }) => {
+        flow.execute((err, { data, result }) => {
 
             expect(err).to.not.exist();
             expect(data).to.be.an.object();
@@ -370,7 +370,7 @@ describe('Mercy', () => {
         expect(flow.flow).to.not.exist();
         expect(flow._children).to.have.length(1);
 
-        flow._execute((err, { data, result }) => {
+        flow.execute((err, { data, result }) => {
 
             expect(err).to.not.exist();
             expect(data).to.be.an.object();
