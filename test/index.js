@@ -1085,11 +1085,19 @@ describe('Mercy', () => {
         Mercy.execute(flow, (err, data, result) => {
 
             expect(err).to.not.exist();
-            expect(result.info.created).to.be.above(0);
-            expect(result.info.started).to.equal(0);
-        });
 
-        done();
+            const server = result;
+
+            server.connections.forEach((connection) => {
+
+                expect(connection._started).to.be.false();
+            });
+
+            expect(server.info.created).to.be.above(0);
+            expect(server.info.started).to.equal(0);
+
+            done();
+        });
     });
 
     it('Mercy.start()', (done) => {
@@ -1103,11 +1111,18 @@ describe('Mercy', () => {
         Mercy.execute(flow, (err, data, result) => {
 
             expect(err).to.not.exist();
-            expect(result.info.created).to.be.above(0);
-            expect(result.info.started).to.be.above(0);
-        });
 
-        done();
+            const server = result;
+            server.connections.forEach((connection) => {
+
+                expect(connection._started).to.be.true();
+            });
+
+            expect(server.info.created).to.be.above(0);
+            expect(server.info.started).to.be.above(0);
+
+            done();
+        });
     });
 
     it('Mercy.stop()', (done) => {
@@ -1115,22 +1130,25 @@ describe('Mercy', () => {
         const manifest = require('./cfg/basic');
         const flow = Mercy.flow([
             Mercy.compose(manifest),
-            Mercy.start().final((server, next) => {
-
-                expect(server.info.started).to.be.above(0);
-                return next(null, server);
-            }),
+            Mercy.start(),
             Mercy.stop()
         ]);
 
         Mercy.execute(flow, (err, data, result) => {
 
             expect(err).to.not.exist();
-            expect(result.info.created).to.be.above(0);
-            expect(result.info.started).to.equal(0);
-        });
 
-        done();
+            const server = result;
+            server.connections.forEach((connection) => {
+
+                expect(connection._started).to.be.false();
+            });
+
+            expect(server.info.created).to.be.above(0);
+            expect(server.info.started).to.equal(0);
+
+            done();
+        });
     });
 
     it('Mercy.prepare()', (done) => {
@@ -1141,11 +1159,15 @@ describe('Mercy', () => {
         Mercy.execute(flow, (err, data, result) => {
 
             expect(err).to.not.exist();
-            expect(result.info.created).to.be.above(0);
-            expect(result.info.started).to.be.above(0);
-        });
 
-        done();
+            const server = result;
+            server.connections.forEach((connection) => {
+
+                expect(connection._started).to.be.true();
+            });
+
+            done();
+        });
     });
 
     it('Mercy.validate()', (done) => {
@@ -1157,9 +1179,9 @@ describe('Mercy', () => {
 
             expect(err).to.not.exist();
             expect(result).to.equal(32);
-        });
 
-        done();
+            done();
+        });
     });
 
     it('Mercy.input(schema)', (done) => {
@@ -1171,9 +1193,9 @@ describe('Mercy', () => {
 
             expect(err).to.not.exist();
             expect(result).to.equal(32);
-        });
 
-        done();
+            done();
+        });
     });
 
     it('Mercy.transform()', (done) => {
@@ -1209,9 +1231,9 @@ describe('Mercy', () => {
                     }
                 }
             });
-        });
 
-        done();
+            done();
+        });
     });
 
     it('Mercy.reach()', (done) => {
@@ -1223,9 +1245,9 @@ describe('Mercy', () => {
 
             expect(err).to.not.exist();
             expect(result).to.equal('foobar');
-        });
 
-        done();
+            done();
+        });
     });
 
     it('Mercy.wreck()', (done) => {
