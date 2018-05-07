@@ -176,7 +176,7 @@ it('complicated', (done) => {
     });
 });
 
-it('will not crash if funciton is null', (done) => {
+it('will not crash if function is null', (done) => {
 
     const flow = Mercy.flow({
         test: (data, next) => { return next(); },
