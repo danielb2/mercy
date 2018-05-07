@@ -97,6 +97,19 @@ describe('Mercy', () => {
 
         done();
     });
+
+    it('shouldnt crash for empty data', (done) => {
+
+        const one = (data, next) => { return next(null, 'test1') };
+        const two = (data, next) => { return next(null, 'test2') };
+        const three = (one, two, next) => { return next(null, [one, two]) };
+
+        const auto = Mercy.flow({ one, two,  three: ['one', 'two', three] });
+
+        auto.tree({});
+
+        done();
+    });
 });
 
 it('complicated', (done) => {
