@@ -110,97 +110,98 @@ describe('Mercy', () => {
 
         done();
     });
-});
 
-it('complicated', (done) => {
+    it('complicated', (done) => {
 
-    const Crypto = require('crypto');
+        const Crypto = require('crypto');
 
-    const internals = {
-        manifest: {
-            server: { load: { sampleInterval: 1000 } },
-            connections: [{
-                labels: ["api", "http"],
-                load: { maxHeapUsedBytes: 1073741824, maxRssBytes: 2147483648, maxEventLoopDelay: 5000 },
-                routes: { timeout: { server: 60000 } }
-            }],
-            registrations: []
-        },
-        preRegister: (server, next) => {
+        const internals = {
+            manifest: {
+                server: { load: { sampleInterval: 1000 } },
+                connections: [{
+                    labels: ["api", "http"],
+                    load: { maxHeapUsedBytes: 1073741824, maxRssBytes: 2147483648, maxEventLoopDelay: 5000 },
+                    routes: { timeout: { server: 60000 } }
+                }],
+                registrations: []
+            },
+            preRegister: (server, next) => {
 
-            const results = [];
-            const rand = (request, reply) => {
+                const results = [];
+                const rand = (request, reply) => {
 
-                const rand = Crypto.randomBytes(4).readUInt32LE(0);
-                results.push(rand);
-                return reply({ rand, results });
-            };
+                    const rand = Crypto.randomBytes(4).readUInt32LE(0);
+                    results.push(rand);
+                    return reply({ rand, results });
+                };
 
-            const status = (request, reply) => {
+                const status = (request, reply) => {
 
-                const status = 'ok';
-                results.push(status);
-                return reply({ status, results });
-            };
+                    const status = 'ok';
+                    results.push(status);
+                    return reply({ status, results });
+                };
 
-            server.route([
-                { method: 'GET', path: '/rand', handler: rand },
-                { method: 'GET', path: '/status', handler: status }
-            ]);
+                server.route([
+                    { method: 'GET', path: '/rand', handler: rand },
+                    { method: 'GET', path: '/status', handler: status }
+                ]);
 
-            return next();
-        }
-    };
-
-
-    // Basic Functions
-    // Note that `data` may be `last value` if injection occurs (series & auto)
-    const one = (data, next) => { return next(null, 'test1') };
-    const two = (data, next) => { return next(null, 'test2') };
-    const three = (one, two, next) => { return next(null, [one, two]) };
-
-    // A preapre() step to demonstrate additional complexity
-    const prepare = Mercy.prepare(internals.manifest, { preRegister: internals.preRegister });
-
-    // Series Flow
-    const series = Mercy.flow().series().tasks(one, two);
-
-    // Parallel Flow
-    const parallel = Mercy.flow().parallel().tasks(one, two);
+                return next();
+            }
+        };
 
 
-    // Main flow to execute
-    const flow = Mercy.flow().wait(200).tasks({     // Wait affects the root flow
-        input: Mercy.input(),                       // Ability to grab execute's input params and make easily accessible
-        prepare: prepare,                           // Consists of Series - [Mercy.compose(), Mercy.start()]
-        series: ['input', series],                  // Small series flow. `input` result is automatically injected
-        wait: ['series', Mercy.wait(200)],          // This is a wait flow()
-        parallel: ['wait', parallel]
-    }).final((data, next) => {
+        // Basic Functions
+        // Note that `data` may be `last value` if injection occurs (series & auto)
+        const one = (data, next) => { return next(null, 'test1') };
+        const two = (data, next) => { return next(null, 'test2') };
+        const three = (one, two, next) => { return next(null, [one, two]) };
 
-        const result = {};
-        return next(null, result);
+        // A preapre() step to demonstrate additional complexity
+        const prepare = Mercy.prepare(internals.manifest, { preRegister: internals.preRegister });
+
+        // Series Flow
+        const series = Mercy.flow().series().tasks(one, two);
+
+        // Parallel Flow
+        const parallel = Mercy.flow().parallel().tasks(one, two);
+
+
+        // Main flow to execute
+        const flow = Mercy.flow().wait(200).tasks({     // Wait affects the root flow
+            input: Mercy.input(),                       // Ability to grab execute's input params and make easily accessible
+            prepare: prepare,                           // Consists of Series - [Mercy.compose(), Mercy.start()]
+            series: ['input', series],                  // Small series flow. `input` result is automatically injected
+            wait: ['series', Mercy.wait(200)],          // This is a wait flow()
+            parallel: ['wait', parallel]
+        }).final((data, next) => {
+
+            const result = {};
+            return next(null, result);
+        });
+
+        Mercy.execute(flow, (err, data, result) => {
+
+            flow.tree(data);
+            done();
+        });
     });
 
-    Mercy.execute(flow, (err, data, result) => {
+    it('will not crash if function is null', (done) => {
 
-        flow.tree(data);
+        const flow = Mercy.flow({
+            test: (data, next) => { return next(); },
+            test2: (data, next) => { return next(); },
+            test3: ['test', (data, next) => { return next(); }]
+        });
+
+        flow.tree();
+
         done();
     });
 });
 
-it('will not crash if function is null', (done) => {
-
-    const flow = Mercy.flow({
-        test: (data, next) => { return next(); },
-        test2: (data, next) => { return next(); },
-        test3: ['test', (data, next) => { return next(); }]
-    });
-
-    flow.tree();
-
-    done();
-});
 
 // root
 // ├── theFlow
