@@ -3,11 +3,7 @@
 // Load modules
 
 const Code = require('code');
-const Hapi = require('hapi');
-const Hoek = require('hoek');
-const Joi = require('joi');
 const Lab = require('lab');
-const Insync = require('insync');
 
 const Mercy = require('../lib');
 const Tree = require('../lib/tree');
@@ -23,15 +19,11 @@ const expect = Code.expect;
 // Declare internals
 
 const internals = {
-    noop: (data, next) => {
-        return next();
-    },
-    echo: (value, next) => {
-        return next(null, value);
-    },
+    noop: (data, next) => { return next(); },
+    echo: (value, next) => { return next(null, value); },
     console: (value, next) => {
 
-        console.log({ value, next });
+        console.log({value, next})
         console.log({ console: value });
         return next(null, value);
     },
@@ -73,32 +65,48 @@ describe('Mercy', () => {
 
     it('prints', (done) => {
 
-
-        const foo = function (data, next) {
-            return next();
-        };
+        const foo = function (data, next) { return next(); };
         const series = Mercy.flow(Mercy.wait(32), Mercy.wait(32)).series();
-        const flow = Mercy.flow({ flow_task_0: foo, series });
-        const flow2 = Mercy.flow({ aFunction: foo, theflow: flow });
+        const flow = Mercy.flow({ flow_task_0: foo, series })
+        const flow2 = Mercy.flow({ aFunction: foo, theflow: flow })
 
         Mercy.execute(flow2, (err, meta, data, result) => {
 
-            flow2.tree(data);
+            const flowTree = new Tree.Flow(flow);
+            const expected = {
+                root: {
+                    _style: 'parallel',
+                    _depends: [],
+                    flow_task_0: {
+                        _style: 'waterfall',
+                        _function: 'foo'
+                    },
+                    series: {
+                        _style: 'series',
+                        _depends: [],
+                        task_0: {
+                            _style: 'waterfall',
+                            _function: 'wait'
+                        },
+                        task_1: {
+                            _style: 'waterfall',
+                            _function: 'wait'
+                        }
+                    }
+                }
+            };
+            expect(flowTree.parse()).to.equal(expected);
+            // flow2.tree(data);
+
             done();
         });
     });
 
     it('auto', (done) => {
 
-        const one = (data, next) => {
-            return next(null, 'test1');
-        };
-        const two = (data, next) => {
-            return next(null, 'test2');
-        };
-        const three = (one, two, next) => {
-            return next(null, [one, two]);
-        };
+        const one = (data, next) => { return next(null, 'test1') };
+        const two = (data, next) => { return next(null, 'test2') };
+        const three = (one, two, next) => { return next(null, [one, two]) };
 
         const auto = Mercy.flow({ one, two,  three: ['one', 'two', three] });
 
@@ -109,15 +117,9 @@ describe('Mercy', () => {
 
     it('shouldnt crash for empty data', (done) => {
 
-        const one = (data, next) => {
-            return next(null, 'test1');
-        };
-        const two = (data, next) => {
-            return next(null, 'test2');
-        };
-        const three = (one, two, next) => {
-            return next(null, [one, two]);
-        };
+        const one = (data, next) => { return next(null, 'test1') };
+        const two = (data, next) => { return next(null, 'test2') };
+        const three = (one, two, next) => { return next(null, [one, two]) };
 
         const auto = Mercy.flow({ one, two,  three: ['one', 'two', three] });
 
@@ -128,12 +130,8 @@ describe('Mercy', () => {
 
     it('should print all dependencies', (done) => {
 
-        const one = (data, next) => {
-            return next(null, 'test1');
-        };
-        const two = (data, next) => {
-            return next(null, 'test2');
-        };
+        const one = (data, next) => { return next(null, 'test1') };
+        const two = (data, next) => { return next(null, 'test2') };
         const series = Mercy.flow().series().tasks(one, two);
 
         const flow = Mercy.flow().wait(200).tasks({     // Wait affects the root flow
@@ -153,7 +151,7 @@ describe('Mercy', () => {
             manifest: {
                 server: { load: { sampleInterval: 1000 } },
                 connections: [{
-                    labels: ['api', 'http'],
+                    labels: ["api", "http"],
                     load: { maxHeapUsedBytes: 1073741824, maxRssBytes: 2147483648, maxEventLoopDelay: 5000 },
                     routes: { timeout: { server: 60000 } }
                 }],
@@ -188,15 +186,9 @@ describe('Mercy', () => {
 
         // Basic Functions
         // Note that `data` may be `last value` if injection occurs (series & auto)
-        const one = (data, next) => {
-            return next(null, 'test1');
-        };
-        const two = (data, next) => {
-            return next(null, 'test2');
-        };
-        const three = (one, two, next) => {
-            return next(null, [one, two]);
-        };
+        const one = (data, next) => { return next(null, 'test1') };
+        const two = (data, next) => { return next(null, 'test2') };
+        const three = (one, two, next) => { return next(null, [one, two]) };
 
         // A preapre() step to demonstrate additional complexity
         const prepare = Mercy.prepare(internals.manifest, { preRegister: internals.preRegister });
@@ -211,7 +203,7 @@ describe('Mercy', () => {
         // Main flow to execute
         const flow = Mercy.flow().wait(200).tasks({     // Wait affects the root flow
             input: Mercy.input(),                       // Ability to grab execute's input params and make easily accessible
-            prepare,                           // Consists of Series - [Mercy.compose(), Mercy.start()]
+            prepare: prepare,                           // Consists of Series - [Mercy.compose(), Mercy.start()]
             series: ['input', series],                  // Small series flow. `input` result is automatically injected
             wait: ['series', Mercy.wait(200)],          // This is a wait flow()
             parallel: ['wait', parallel]
@@ -231,15 +223,9 @@ describe('Mercy', () => {
     it('will not crash if function is null', (done) => {
 
         const flow = Mercy.flow({
-            test: (data, next) => {
-                return next();
-            },
-            test2: (data, next) => {
-                return next();
-            },
-            test3: ['test', (data, next) => {
-                return next();
-            }]
+            test: (data, next) => { return next(); },
+            test2: (data, next) => { return next(); },
+            test3: ['test', (data, next) => { return next(); }]
         });
 
         flow.tree();
