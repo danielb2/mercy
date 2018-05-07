@@ -99,7 +99,7 @@ describe('Mercy', () => {
     });
 });
 
-it.skip('complicated', (done) => {
+it('complicated', (done) => {
 
     const Crypto = require('crypto');
 
@@ -169,7 +169,7 @@ it.skip('complicated', (done) => {
         return next(null, result);
     });
 
-    Mercy.execute(flow, (err, meta, data, result) => {
+    Mercy.execute(flow, (err, data, result) => {
 
         flow.tree(data);
         done();
