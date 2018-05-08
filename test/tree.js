@@ -72,29 +72,32 @@ describe('Mercy', () => {
 
         Mercy.execute(flow2, (err, meta, data, result) => {
 
-            const flowTree = new Tree.Flow(flow);
             const expected = {
                 root: {
                     _style: 'parallel',
                     _depends: [],
                     flow_task_0: {
                         _style: 'waterfall',
-                        _function: 'foo'
+                        _function: 'foo',
+                        _depends: []
                     },
                     series: {
                         _style: 'series',
                         _depends: [],
                         task_0: {
                             _style: 'waterfall',
-                            _function: 'wait'
+                            _function: 'wait',
+                            _depends: []
                         },
                         task_1: {
                             _style: 'waterfall',
-                            _function: 'wait'
+                            _function: 'wait',
+                            _depends: []
                         }
                     }
                 }
             };
+            const flowTree = new Tree.Flow(flow);
             expect(flowTree.parse()).to.equal(expected);
             // flow2.tree(data);
 
@@ -132,14 +135,52 @@ describe('Mercy', () => {
 
         const one = (data, next) => { return next(null, 'test1') };
         const two = (data, next) => { return next(null, 'test2') };
+        const wait = (data, next) => { return next(null, 'test2') };
         const series = Mercy.flow().series().tasks(one, two);
 
-        const flow = Mercy.flow().wait(200).tasks({     // Wait affects the root flow
-            series: ['input', series],                  // Small series flow. `input` result is automatically injected
+        const flow = Mercy.flow().wait(200).tasks({
+            input: [one],
+            series: ['input', series],
             wait: ['series', Mercy.wait(200)]
         });
 
-        flow.tree();
+        const expected = {
+            root: {
+                _style: 'auto',
+                _depends: [],
+                input: {
+                    _style: 'waterfall',
+                    _function: 'one',
+                    _depends: []
+                },
+                series: {
+                    _style: 'series',
+                    _depends: [
+                        'input'
+                    ],
+                    task_0: {
+                        _style: 'waterfall',
+                        _function: 'one',
+                        _depends: []
+                    },
+                    task_1: {
+                        _style: 'waterfall',
+                        _function: 'two',
+                        _depends: []
+                    }
+                },
+                wait: {
+                    _style: 'waterfall',
+                    _function: 'wait',
+                    _depends: [
+                        'series'
+                    ]
+                }
+            }
+        };
+
+        const flowTree = new Tree.Flow(flow);
+        expect(flowTree.parse()).to.equal(expected);
         done();
     });
 
